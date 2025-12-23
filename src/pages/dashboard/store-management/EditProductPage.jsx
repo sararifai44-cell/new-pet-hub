@@ -1,104 +1,140 @@
+// src/pages/dashboard/store-management/EditProductPage.jsx
 import React, { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Package } from "lucide-react";
 
 import ProductForm from "../../../features/product/components/ProductForm";
 import { Button } from "../../../components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../../components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
 
-import {
-  useGetProductsQuery,
-  useUpdateProductMutation,
-} from "../../../features/product/productApiSlice";
+import { useGetProductQuery, useUpdateProductMutation } from "../../../features/product/productApiSlice";
+import { useGetProductCategoriesQuery } from "../../../features/productCategory/productCategoryApiSlice";
+
+// ---- Helpers ----
+
+const normalizeProduct = (p) => {
+  if (!p) return null;
+
+  const catId = p.category?.id ?? p.product_category_id ?? null;
+  const stockQty = p.stock_quantity ?? p.stock ?? 0;
+
+  return {
+    id: p.id,
+    name_en: p.name_en ?? "",
+    name_ar: p.name_ar ?? "",
+    product_category_id: catId ? String(catId) : "",
+    price: p.price ?? "",
+    // ✅ keep as string for the form inputs
+    stock_quantity: String(stockQty ?? 0),
+    description: p.description ?? "",
+    is_active: !!p.is_active,
+  };
+};
+
+const buildPartialPayload = (formData, original) => {
+  const payload = {};
+  if (!original) return payload;
+
+  if ((formData.name_en ?? "") !== (original.name_en ?? "")) payload.name_en = formData.name_en ?? "";
+  if ((formData.name_ar ?? "") !== (original.name_ar ?? "")) payload.name_ar = formData.name_ar ?? "";
+
+  const newDesc = formData.description ?? "";
+  const oldDesc = original.description ?? "";
+  if (newDesc !== oldDesc) payload.description = newDesc;
+
+  // Category
+  const newCat = String(formData.product_category_id ?? "");
+  const oldCat = String(original.product_category_id ?? "");
+  if (newCat !== oldCat) {
+    payload.product_category_id = newCat ? Number(newCat) : null;
+  }
+
+  // Price
+  const newPrice = Number(formData.price);
+  const oldPrice = Number(original.price);
+  if (!Number.isNaN(newPrice) && newPrice !== oldPrice) payload.price = newPrice;
+
+  // ✅ Stock (backend expects stock_quantity)
+  const newStock = Number(formData.stock_quantity);
+  const oldStock = Number(original.stock_quantity);
+  if (!Number.isNaN(newStock) && newStock !== oldStock) payload.stock_quantity = newStock;
+
+  // is_active
+  if (!!formData.is_active !== !!original.is_active) payload.is_active = !!formData.is_active;
+
+  return payload;
+};
+
+// ---- Component ----
 
 const EditProductPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const productId = Number(id);
 
-  // 🟣 نجيب كل المنتجات
-  const { data: productsResponse } = useGetProductsQuery();
-  const products = productsResponse?.data ?? [];
+  const { data: productResponse, isLoading: isProductLoading, isError: isProductError } =
+    useGetProductQuery(productId, { skip: !productId });
 
-  // 🟣 mutation للتحديث
-  const [updateProduct, { isLoading: isSubmitting }] =
-    useUpdateProductMutation();
+  const { data: categoriesResponse, isLoading: isCategoriesLoading } = useGetProductCategoriesQuery();
 
-  // 🟣 المنتج المطلوب تعديله
-  const product = useMemo(
-    () => products.find((p) => p.id === productId) || null,
-    [products, productId]
-  );
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
 
-  // 🟣 نجهز:
-  // - categories: مصفوفة labels نصية
-  // - categoryNameToId: Map من label -> id
-  const { categories, categoryNameToId } = useMemo(() => {
-    const map = new Map();
-    const labels = [];
+  const product = useMemo(() => {
+    if (!productResponse) return null;
+    const raw = productResponse.data ?? productResponse;
+    return normalizeProduct(raw);
+  }, [productResponse]);
 
-    products.forEach((p) => {
-      const cat = p.category;
-      if (!cat) return;
+  const categories = useMemo(() => {
+    if (!categoriesResponse) return [];
+    return categoriesResponse.data ?? categoriesResponse;
+  }, [categoriesResponse]);
 
-      const label =
-        cat.name_en ?? cat.name_ar ?? cat.name ?? `Category #${cat.id}`;
+  const isLoadingData = isProductLoading || isCategoriesLoading || isUpdating;
 
-      if (!map.has(label)) {
-        map.set(label, cat.id);
-        labels.push(label);
+  const handleUpdateProduct = async (formData) => {
+    try {
+      const changes = buildPartialPayload(formData, product);
+
+      if (Object.keys(changes).length === 0) {
+        navigate("/dashboard/store-management/products");
+        return;
       }
-    });
 
-    return { categories: labels, categoryNameToId: map };
-  }, [products]);
+      const payload = { id: productId, ...changes };
+      await updateProduct(payload).unwrap();
 
-  // 🟣 initialData مناسب للفورم
-  const initialFormData = useMemo(() => {
-    if (!product) return {};
+      navigate("/dashboard/store-management/products");
+    } catch (error) {
+      console.error("Failed to update product:", error);
+      console.log("Backend validation (update):", error?.data);
+    }
+  };
 
-    const cat = product.category;
-    const categoryLabel = cat
-      ? cat.name_en ?? cat.name_ar ?? cat.name ?? `Category #${cat.id}`
-      : "";
-
-    return {
-      // الحقول اللي الفورم يتوقعها
-      name: product.name_en ?? product.name ?? "",
-      category: categoryLabel,
-      price: product.price ?? "",
-      stock_quantity: product.stock_quantity ?? "",
-      description: product.description ?? "",
-      is_active:
-        product.is_active === 1 || product.is_active === true,
-      // لو حبيت تستخدم الصور لاحقًا
-      images: [],
-    };
-  }, [product]);
-
-  if (!product) {
+  if (isProductLoading || isCategoriesLoading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
-        <Card>
-          <CardContent className="py-8 text-center space-y-3">
-            <p className="text-lg font-semibold text-slate-900">
-              Product not found
-            </p>
-            <p className="text-sm text-slate-500">
-              The product you are looking for does not exist or has been
-              removed.
+      <div className="p-6 max-w-4xl mx-auto">
+        <p className="text-center text-gray-500">Loading product data...</p>
+      </div>
+    );
+  }
+
+  if (isProductError) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <Card className="shadow-sm border border-slate-100 bg-white">
+          <CardContent className="py-10 flex flex-col items-center gap-3">
+            <p className="text-lg font-semibold text-slate-900">Failed to load product</p>
+            <p className="text-sm text-slate-500 text-center max-w-md">
+              Something went wrong while loading this product.
             </p>
             <Button
-              className="mt-2"
               variant="outline"
-              onClick={() => navigate("/dashboard/store-management")}
+              className="mt-2"
+              onClick={() => navigate("/dashboard/store-management/products")}
             >
-              Back to products
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Products
             </Button>
           </CardContent>
         </Card>
@@ -106,126 +142,77 @@ const EditProductPage = () => {
     );
   }
 
-  // helper صغير يختار القيمة الجديدة لو موجودة، غير هيك يرجع القديمة
-  const pickValue = (newVal, oldVal) => {
-    if (newVal === undefined || newVal === null) return oldVal;
-    if (typeof newVal === "string" && newVal.trim() === "") return oldVal;
-    return newVal;
-  };
-
-  // 🟣 handler تبع التحديث – يعدّل كل الحقول، ويترك الغير معدّلة مثل ما هي
-  const handleUpdateProduct = async (formValues) => {
-    try {
-      console.log("🔹 Form values =>", formValues);
-
-      // name_en: جاي من حقل name في الفورم
-      const name_en =
-        formValues.name && formValues.name.trim() !== ""
-          ? formValues.name
-          : product.name_en;
-
-      // stock_quantity: لو فاضي نرجع للقيمة القديمة
-      let stock_quantity;
-      if (
-        formValues.stock_quantity === undefined ||
-        formValues.stock_quantity === null ||
-        formValues.stock_quantity === ""
-      ) {
-        stock_quantity = product.stock_quantity;
-      } else {
-        stock_quantity = Number(formValues.stock_quantity);
-      }
-
-      // is_active: checkbox → boolean
-      const is_active =
-        formValues.is_active !== undefined
-          ? !!formValues.is_active
-          : product.is_active === 1 || product.is_active === true;
-
-      const payload = {
-        name_en,
-        stock_quantity,
-        is_active,
-      };
-
-      console.log("📦 Update payload =>", payload);
-
-      await updateProduct({ id: productId, body: payload }).unwrap();
-
-      navigate("/dashboard/store-management");
-    } catch (error) {
-      console.error("❌ Failed to update product:", error);
-      if (error?.data?.errors) {
-        const firstKey = Object.keys(error.data.errors)[0];
-        alert(error.data.errors[firstKey][0]);
-      } else {
-        alert("Failed to update product. Please try again.");
-      }
-    }
-  };
+  if (!product) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <Card className="shadow-sm border border-slate-100 bg-white">
+          <CardContent className="py-10 flex flex-col items-center gap-3">
+            <p className="text-lg font-semibold text-slate-900">Product not found</p>
+            <p className="text-sm text-slate-500 text-center max-w-md">
+              The product you are trying to edit does not exist or may have been removed.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-2"
+              onClick={() => navigate("/dashboard/store-management/products")}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Products
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      {/* Back button */}
       <div>
         <Button
           variant="outline"
           size="sm"
           className="flex items-center gap-2 rounded-full border-slate-200 bg-white shadow-sm hover:bg-slate-50"
-          onClick={() => navigate("/dashboard/store-management")}
+          onClick={() => navigate("/dashboard/store-management/products")}
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to products
+          Back to Products
         </Button>
       </div>
 
-      {/* Title card */}
       <Card className="shadow-sm border border-slate-100 bg-white/80">
         <CardHeader className="flex flex-col items-center gap-3 py-6">
           <div className="relative">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/5 to-indigo-500/25 flex items-center justify-center border border-indigo-100 shadow-sm">
-              <Package className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 via-blue-500/5 to-blue-500/25 flex items-center justify-center border border-blue-100 shadow-sm">
+              <Package className="w-6 h-6 text-blue-600" />
             </div>
-            <div className="absolute -right-1 -bottom-1 w-4 h-4 rounded-full bg-amber-500 border-2 border-white" />
           </div>
 
           <div className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-semibold text-slate-900">
-              Edit product
-            </CardTitle>
-            <p className="text-sm text-slate-500">
-              Update the product information and images.
-            </p>
+            <CardTitle className="text-2xl font-semibold text-slate-900">Edit Product</CardTitle>
+            <p className="text-sm text-slate-500">Update the information of the selected product</p>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Form card */}
       <Card className="shadow-sm border border-slate-100 bg-white">
         <CardHeader className="border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-xs">
-              <Package className="w-5 h-5 text-indigo-600" />
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 shadow-xs">
+              <Package className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold text-slate-900">
-                Product information
-              </CardTitle>
-              <p className="text-sm text-slate-500">
-                Edit the details and manage product photos.
-              </p>
+              <CardTitle className="text-lg font-semibold text-slate-900">Product Information</CardTitle>
+              <p className="text-sm text-slate-500">Edit the basic information about the product</p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="pt-6">
           <ProductForm
-            key={productId}
-            mode="edit"
-            initialData={initialFormData}
-            onSubmit={handleUpdateProduct}
-            isSubmitting={isSubmitting}
+            initialData={product}
             categories={categories}
+            onSubmit={handleUpdateProduct}
+            isSubmitting={isLoadingData}
           />
         </CardContent>
       </Card>

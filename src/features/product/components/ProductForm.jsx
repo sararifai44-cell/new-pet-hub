@@ -1,318 +1,191 @@
-import React, { useState } from "react";
+// src/features/product/components/ProductForm.jsx
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { productFormSchema } from "../../../lib/validation/productFormSchema";
+import {
+  productFormSchema,
+  getProductDefaultValues,
+} from "../../../lib/validation/productFormSchema";
 
-// shadcn ui
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
-import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
 
-import { UploadCloud, Image as ImageIcon } from "lucide-react";
-
-const DEFAULT_CATEGORY_OPTIONS = [
-  "Food",
-  "Toys",
-  "Accessories",
-  "Beds",
-  "Health & Care",
-  "Grooming",
-];
-
 const ProductForm = ({
-  mode = "create", // "create" | "edit" | "view"
   initialData = {},
+  categories = [],
   onSubmit,
   isSubmitting = false,
-  categories = [], // 👈 تجي من AddProductPage
 }) => {
-  const isReadOnly = mode === "view";
-
-  const defaultValues = {
-    name: initialData.name || "",
-    category: initialData.category || "",
-    price:
-      typeof initialData.price === "number"
-        ? initialData.price
-        : initialData.price || "",
-    stock_quantity:
-      typeof initialData.stock_quantity === "number"
-        ? initialData.stock_quantity
-        : initialData.stock_quantity || "",
-    description: initialData.description || "",
-    images: initialData.images || [],
-    is_active:
-      typeof initialData.is_active === "boolean"
-        ? initialData.is_active
-        : true,
-  };
-
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-    watch,
   } = useForm({
     resolver: zodResolver(productFormSchema),
-    defaultValues,
+    defaultValues: getProductDefaultValues(initialData),
   });
 
-  const [imagePreviews, setImagePreviews] = useState(defaultValues.images);
-  const currentImages = watch("images");
+  const handleFormSubmit = (data) => {
+    // ✅ خلّي الفورم يطلع payload موحّد (خصوصاً للـ create)
+    const payload = {
+      name_en: data.name_en,
+      name_ar: data.name_ar,
+      product_category_id: Number(data.product_category_id),
+      price: Number(data.price),
 
-  const handleImagesSelected = async (event) => {
-    if (isReadOnly) return;
+      // ✅ بدل stock -> stock_quantity
+      stock_quantity: Number(data.stock_quantity),
 
-    const files = Array.from(event.target.files || []);
-    if (!files.length) return;
+      description: data.description ?? "",
+      is_active: !!data.is_active,
+    };
 
-    const remaining = 5 - (imagePreviews?.length || 0);
-    if (remaining <= 0) return;
-
-    const selected = files.slice(0, remaining);
-
-    const readAsDataUrl = (file) =>
-      new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () =>
-          resolve(typeof reader.result === "string" ? reader.result : "");
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-    try {
-      const dataUrls = await Promise.all(selected.map(readAsDataUrl));
-      const nextImages = [...(currentImages || []), ...dataUrls];
-
-      setImagePreviews(nextImages);
-      setValue("images", nextImages, { shouldValidate: true });
-    } catch (e) {
-      console.error("Failed to read images", e);
-    } finally {
-      event.target.value = "";
-    }
+    onSubmit(payload);
   };
-
-  const handleRemoveImage = (index) => {
-    if (isReadOnly) return;
-    const next = (currentImages || []).filter((_, i) => i !== index);
-    setImagePreviews(next);
-    setValue("images", next, { shouldValidate: true });
-  };
-
-  const submitHandler = (values) => {
-    if (!onSubmit) return;
-    onSubmit(values);
-  };
-
-  // 👈 إذا جتنا categories من فوق نستخدمها، غير هيك fallback للـ DEFAULT_CATEGORY_OPTIONS
-  const categoryOptions =
-    categories && categories.length > 0 ? categories : DEFAULT_CATEGORY_OPTIONS;
 
   return (
-    <form
-      onSubmit={handleSubmit(submitHandler)}
-      className="space-y-6"
-      noValidate
-    >
-      {/* الحقول الأساسية */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Name */}
-        <div className="space-y-1.5">
-          <Label htmlFor="name">Product name</Label>
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {/* Names */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Product Name (EN) <span className="text-red-500">*</span>
+          </label>
           <Input
-            id="name"
-            placeholder="e.g. Cat Scratching Post"
-            disabled={isSubmitting || isReadOnly}
-            {...register("name")}
+            type="text"
+            {...register("name_en")}
+            placeholder="e.g. Cat Food"
+            className={errors.name_en ? "border-red-300 bg-red-50" : ""}
           />
-          {errors.name && (
-            <p className="text-xs text-red-500">
-              {errors.name.message?.toString()}
-            </p>
+          {errors.name_en && (
+            <p className="text-red-500 text-xs">{errors.name_en.message}</p>
           )}
         </div>
 
-        {/* Category (dropdown) */}
-        <div className="space-y-1.5">
-          <Label htmlFor="category">Category</Label>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            اسم المنتج (AR) <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="text"
+            {...register("name_ar")}
+            placeholder="مثال: أكل قطط"
+            className={errors.name_ar ? "border-red-300 bg-red-50" : ""}
+          />
+          {errors.name_ar && (
+            <p className="text-red-500 text-xs">{errors.name_ar.message}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Category + Price + Stock */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2 md:col-span-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Category <span className="text-red-500">*</span>
+          </label>
           <select
-            id="category"
-            disabled={isSubmitting || isReadOnly}
-            className="w-full h-10 rounded-md border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            {...register("category")}
+            {...register("product_category_id")}
+            className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              errors.product_category_id
+                ? "border-red-300 bg-red-50"
+                : "border-gray-300"
+            }`}
           >
             <option value="">Select category</option>
-            {categoryOptions.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name_en} / {cat.name_ar}
               </option>
             ))}
           </select>
-          {errors.category && (
-            <p className="text-xs text-red-500">
-              {errors.category.message?.toString()}
+          {errors.product_category_id && (
+            <p className="text-red-500 text-xs">
+              {errors.product_category_id.message}
             </p>
           )}
         </div>
 
-        {/* Price */}
-        <div className="space-y-1.5">
-          <Label htmlFor="price">Price (USD)</Label>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Price <span className="text-red-500">*</span>
+          </label>
           <Input
-            id="price"
             type="number"
             step="0.01"
             min="0"
-            placeholder="e.g. 19.99"
-            disabled={isSubmitting || isReadOnly}
             {...register("price")}
+            placeholder="e.g. 12.00"
+            className={errors.price ? "border-red-300 bg-red-50" : ""}
           />
+          {errors.price && (
+            <p className="text-red-500 text-xs">{errors.price.message}</p>
+          )}
         </div>
 
-        {/* Stock */}
-        <div className="space-y-1.5">
-          <Label htmlFor="stock_quantity">Stock quantity</Label>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Stock Quantity <span className="text-red-500">*</span>
+          </label>
           <Input
-            id="stock_quantity"
             type="number"
             min="0"
-            placeholder="e.g. 10"
-            disabled={isSubmitting || isReadOnly}
+            // ✅ بدل stock -> stock_quantity
             {...register("stock_quantity")}
+            placeholder="e.g. 5"
+            className={errors.stock_quantity ? "border-red-300 bg-red-50" : ""}
           />
+          {errors.stock_quantity && (
+            <p className="text-red-500 text-xs">
+              {errors.stock_quantity.message}
+            </p>
+          )}
         </div>
-
-        {errors.price && (
-          <p className="text-xs text-red-500 md:col-span-1">
-            {errors.price.message?.toString()}
-          </p>
-        )}
-        {errors.stock_quantity && (
-          <p className="text-xs text-red-500 md:col-span-1">
-            {errors.stock_quantity.message?.toString()}
-          </p>
-        )}
       </div>
 
       {/* Description */}
-      <div className="space-y-1.5">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          rows={4}
-          placeholder="Short description about the product..."
-          disabled={isSubmitting || isReadOnly}
-          {...register("description")}
-        />
-        {errors.description && (
-          <p className="text-xs text-red-500">
-            {errors.description.message?.toString()}
-          </p>
-        )}
-      </div>
-
-      {/* Images upload */}
       <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <ImageIcon className="w-4 h-4" />
-          Product Images{" "}
-          <span className="text-xs text-slate-500">(Max 5 images)</span>
-        </Label>
-
-        <label className="mt-1 flex flex-col items-center justify-center w-full border-2 border-dashed border-slate-200 rounded-xl px-4 py-8 text<center bg-slate-50/40 hover:bg-slate-50 cursor-pointer transition">
-          <UploadCloud className="w-8 h-8 text-slate-400 mb-2" />
-          <p className="text-sm text-slate-700">
-            Click to upload images or drag and drop
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            PNG, JPG up to 5MB each (Max 5 images)
-          </p>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={handleImagesSelected}
-            disabled={isSubmitting || isReadOnly}
-          />
+        <label className="block text-sm font-medium text-gray-700">
+          Description
         </label>
-
-        {imagePreviews && imagePreviews.length > 0 && (
-          <div className="pt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {imagePreviews.map((src, index) => (
-              <div
-                key={index}
-                className="relative group rounded-lg border border-slate-200 bg-white overflow-hidden"
-              >
-                <img
-                  src={src}
-                  alt={`Product ${index + 1}`}
-                  className="w-full h-24 object-cover"
-                />
-                {!isReadOnly && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(index)}
-                    className="absolute top-1 right-1 rounded-full bg-black/60 text-white text-[11px] px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {errors.images && (
-          <p className="text-xs text-red-500">
-            {errors.images.message?.toString()}
-          </p>
-        )}
+        <Textarea
+          {...register("description")}
+          rows={4}
+          placeholder="Describe the product (usage, size, etc.)"
+          className="resize-none"
+        />
       </div>
 
-      {/* Active product */}
-      <div className="pt-2">
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <input
-            id="is_active"
-            type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-red-500 focus:ring-red-500"
-            disabled={isSubmitting || isReadOnly}
-            {...register("is_active")}
-          />
-          <label
-            htmlFor="is_active"
-            className="flex flex-col cursor-pointer"
-          >
-            <span className="text-sm font-medium text-slate-900">
-              Active product
-            </span>
-            <span className="text-xs text-slate-500">
-              If unchecked, this product will be hidden from the shop.
-            </span>
-          </label>
-        </div>
+      {/* Active toggle */}
+      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <input
+          type="checkbox"
+          {...register("is_active")}
+          id="active-checkbox"
+          className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500 border-gray-300"
+        />
+        <label htmlFor="active-checkbox" className="text-sm cursor-pointer">
+          Product is active / visible in store
+        </label>
       </div>
 
-      {mode !== "view" && (
-        <div className="pt-4 flex justify-end">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="min-w-[140px]"
-          >
-            {isSubmitting
-              ? "Saving..."
-              : mode === "edit"
-              ? "Save changes"
-              : "Create product"}
-          </Button>
-        </div>
-      )}
+      {/* Submit */}
+      <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
+        <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+          {isSubmitting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              {initialData.id ? "Updating..." : "Adding..."}
+            </>
+          ) : initialData.id ? (
+            "Update Product"
+          ) : (
+            "Add Product"
+          )}
+        </Button>
+      </div>
     </form>
   );
 };

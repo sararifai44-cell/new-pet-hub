@@ -1,6 +1,14 @@
+// src/pages/dashboard/pet-management/PetListPage.jsx
+
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import {
+  Plus,
+  PawPrint,
+  Heart,
+  XCircle,
+  Layers,
+} from "lucide-react";
 
 import PetFilters from "../../../features/pet/components/PetFilters";
 import PetTable from "../../../features/pet/components/PetTable";
@@ -167,14 +175,15 @@ export default function PetListPage() {
     [petTypesResponse]
   );
 
-  // Quick stats
+  // Stats
   const totalPets = pets.length;
   const availablePets = pets.filter(
     (pet) => pet.is_adoptable
   ).length;
-  const adoptedPets = pets.filter(
-    (pet) => !pet.is_adoptable
-  ).length;
+  const notAvailablePets = totalPets - availablePets;
+
+  // عدد الأنواع الموجودة
+  const petTypesCount = petTypes.length;
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -232,8 +241,7 @@ export default function PetListPage() {
 
   // Handlers
   const handleViewPet = (pet) => {
-    console.log("View pet:", pet);
-     navigate(`/dashboard/pet-management/${pet.pet_id}`)
+    navigate(`/dashboard/pet-management/${pet.pet_id}`);
   };
 
   const handleEditPet = (pet) => {
@@ -293,17 +301,23 @@ export default function PetListPage() {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">
-            Pet Management
-          </h1>
-          <p className="text-gray-600 text-sm">
-            Manage all pets in the system
-          </p>
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500/20 via-blue-500/5 to-blue-500/25 flex items-center justify-center border border-blue-100 shadow-sm">
+            <PawPrint className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Pet Management
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Manage all pets in the system and their adoption status
+            </p>
+          </div>
         </div>
+
         <div className="flex gap-3">
           <Button
             onClick={() =>
@@ -317,44 +331,72 @@ export default function PetListPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="flex justify-center">
-        <Card className="w-full max-w-md shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold text-center">
-              Quick Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="flex items-stretch justify-between divide-x divide-gray-200">
-              <div className="flex-1 text-center py-2">
-                <div className="text-2xl font-semibold text-gray-900">
-                  {totalPets}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
+      {/* 🔹 Compact stats bar (نفس نمط المتجر) */}
+      <Card className="border-slate-200 bg-white shadow-sm">
+        <CardContent className="py-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Total pets */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full border border-violet-200 bg-violet-50 flex items-center justify-center">
+                <PawPrint className="w-4 h-4 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
                   Total Pets
-                </div>
-              </div>
-              <div className="flex-1 text-center py-2">
-                <div className="text-2xl font-semibold text-indigo-600">
-                  {availablePets}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Available
-                </div>
-              </div>
-              <div className="flex-1 text-center py-2">
-                <div className="text-2xl font-semibold text-gray-900">
-                  {adoptedPets}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Not Available
-                </div>
+                </p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {totalPets}
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            {/* Available for adoption */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full border border-emerald-200 bg-emerald-50 flex items-center justify-center">
+                <Heart className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                  Available
+                </p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {availablePets}
+                </p>
+              </div>
+            </div>
+
+            {/* Not available */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full border border-amber-200 bg-amber-50 flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                  Not Available
+                </p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {notAvailablePets}
+                </p>
+              </div>
+            </div>
+
+            {/* Pet types count */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full border border-blue-200 bg-blue-50 flex items-center justify-center">
+                <Layers className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
+                  Pet Types
+                </p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {petTypesCount}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <PetFilters
@@ -366,16 +408,18 @@ export default function PetListPage() {
       />
 
       {/* Table + Pagination */}
-      <Card>
-        <CardHeader className="pb-4">
+      <Card className="shadow-sm border border-slate-100 bg-white">
+        <CardHeader className="pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
-            <CardTitle>All Pets</CardTitle>
-            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <CardTitle className="text-lg font-semibold text-slate-900">
+              All Pets
+            </CardTitle>
+            <span className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
               {filteredPets.length} pets
             </span>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <PetTable
             pets={paginatedPets}
             onView={handleViewPet}
@@ -407,9 +451,7 @@ export default function PetListPage() {
                     <Button
                       key={pageNumber}
                       size="sm"
-                      variant={
-                        isActive ? "default" : "outline"
-                      }
+                      variant={isActive ? "default" : "outline"}
                       onClick={() => goToPage(pageNumber)}
                       className={
                         "w-9 h-9 px-0 text-sm " +

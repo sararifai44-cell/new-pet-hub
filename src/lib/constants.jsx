@@ -30,24 +30,24 @@ export const DASHBOARD_SIDEBAR_LINKS = [
   {
     key: "pet-management",
     label: "Pet Management",
-    icon: <PiPawPrintLight />, // بصمة حيوان كأيقونة رئيسية
+    icon: <PiPawPrintLight />,
     children: [
       {
         key: "pets-list",
         label: "All Pets",
         path: "/dashboard/pet-management",
-        icon: <GiSittingDog />, // كلب لطيف لقائمة الحيوانات
+        icon: <GiSittingDog />,
       },
       {
         key: "pet-catalog",
         label: "Types & Breeds",
         path: "/dashboard/pet-management/catalog",
-        icon: <GiCat />, // قطة لأنواع/سلالات
+        icon: <GiCat />,
       },
     ],
   },
 
-  // 💛 مركز التبني – قلب (يمشي مع الفكرة)
+  // 💛 مركز التبني
   {
     key: "adoption-center",
     label: "Adoption Center",
@@ -79,12 +79,28 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     icon: <HiOutlineClipboardList />,
   },
 
-  // 🛒 المتجر
+  // 🛒 المتجر — صار Group فيه دروب داون
   {
     key: "store-management",
     label: "Store Management",
-    path: "/dashboard/store-management",
     icon: <HiOutlineShoppingCart />,
+    children: [
+      {
+        key: "store-products",
+        label: "Products",
+        path: "/dashboard/store-management/products",
+      },
+      {
+        key: "store-categories",
+        label: "Categories",
+        path: "/dashboard/store-management/categories",
+      },
+      {
+        key: "orders",
+        label: "orders",
+        path: "/dashboard/store-management/orders",
+      },
+    ],
   },
 
   // 👤 إدارة المستخدمين

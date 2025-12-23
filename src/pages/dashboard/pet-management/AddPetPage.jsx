@@ -83,7 +83,7 @@ const AddPetPage = () => {
           dataFromForm.ownerId ??
           1,
         // مهم عشان 422 تبع "description must be a string"
-        description: dataFromForm.description ?? "",
+        description: dataFromForm.description ,
       };
 
       console.log("payload to API:", payload);

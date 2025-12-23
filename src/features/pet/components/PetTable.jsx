@@ -1,3 +1,4 @@
+// src/features/pet/components/PetTable.jsx
 import React from "react";
 import { Edit3, Trash2, Eye } from "lucide-react";
 
@@ -60,9 +61,6 @@ const PetTable = ({
               Type &amp; Breed
             </TableHead>
             <TableHead className="text-xs font-semibold text-gray-600 uppercase">
-              Owner
-            </TableHead>
-            <TableHead className="text-xs font-semibold text-gray-600 uppercase">
               Status
             </TableHead>
             {showActions && (
@@ -106,12 +104,6 @@ const PetTable = ({
                 </div>
                 <div className="text-xs text-gray-500">
                   {pet.breed?.name}
-                </div>
-              </TableCell>
-
-              <TableCell>
-                <div className="text-sm font-medium text-gray-900">
-                  {pet.owner?.full_name || "Center"}
                 </div>
               </TableCell>
 

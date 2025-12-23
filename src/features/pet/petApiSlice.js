@@ -6,10 +6,19 @@ export const petApiSlice = apiSlice.injectEndpoints({
     // GET /api/admin/pets
     getPets: builder.query({
       query: () => "/admin/pets",
-      providesTags: (result) =>
-        result?.data
-          ? ["Pet", ...result.data.map((pet) => ({ type: "Pet", id: pet.id }))]
-          : ["Pet"],
+      providesTags: (result) => {
+        const list = result?.data ?? [];
+        return [
+          { type: "Pet", id: "LIST" },
+          ...list.map((pet) => ({ type: "Pet", id: pet.id })),
+        ];
+      },
+    }),
+
+    // ✅ GET /api/admin/pets/:id  (SHOW)
+    getPet: builder.query({
+      query: (id) => `/admin/pets/${id}`,
+      providesTags: (result, error, id) => [{ type: "Pet", id }],
     }),
 
     // POST /api/admin/pets
@@ -19,17 +28,20 @@ export const petApiSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Pet"],
+      invalidatesTags: [{ type: "Pet", id: "LIST" }],
     }),
 
-    // PUT /api/admin/pets/:id
+    // PATCH /api/admin/pets/:id
     updatePet: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `/admin/pets/${id}`,
-        method: "PUT", // أو PATCH لو هيك عندك بالباك
+        method: "PATCH",
         body: data,
       }),
-      invalidatesTags: (result, error, { id }) => ["Pet", { type: "Pet", id }],
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Pet", id },
+        { type: "Pet", id: "LIST" },
+      ],
     }),
 
     // DELETE /api/admin/pets/:id
@@ -38,7 +50,10 @@ export const petApiSlice = apiSlice.injectEndpoints({
         url: `/admin/pets/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: (result, error, id) => ["Pet", { type: "Pet", id }],
+      invalidatesTags: (result, error, id) => [
+        { type: "Pet", id },
+        { type: "Pet", id: "LIST" },
+      ],
     }),
   }),
   overrideExisting: false,
@@ -46,6 +61,7 @@ export const petApiSlice = apiSlice.injectEndpoints({
 
 export const {
   useGetPetsQuery,
+  useGetPetQuery, // ✅ الجديد
   useCreatePetMutation,
   useUpdatePetMutation,
   useDeletePetMutation,

@@ -1,147 +1,164 @@
 // src/features/product/components/ProductTable.jsx
-
 import React from "react";
-import { Eye, Edit3, Trash2 } from "lucide-react";
-import { defaultProductImages } from "../../../lib/mockData";
+import { Edit3, Trash2, Eye } from "lucide-react";
 
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "../../../components/ui/table";
+import { Button } from "../../../components/ui/button";
+import { Badge } from "../../../components/ui/badge";
 
-const DEFAULT_PRODUCT_IMAGE =
-  defaultProductImages?.dogFood ||
-  Object.values(defaultProductImages || {})[0] ||
-  "";
-
-// badge تبع المخزون
-const renderStockBadge = (stock) => {
-  let label = "In stock";
-  let cls = "bg-green-50 text-green-700 border-green-200";
-
-  if (stock === 0) {
-    label = "Out of stock";
-    cls = "bg-red-50 text-red-700 border-red-200";
-  } else if (stock > 0 && stock <= 10) {
-    label = "Low stock";
-    cls = "bg-orange-50 text-orange-700 border-orange-200";
+const ProductTable = ({
+  products,
+  onView,
+  onEdit,
+  onDelete,
+  showActions = true,
+}) => {
+  if (!products || products.length === 0) {
+    return (
+      <div className="text-center py-8 text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg">
+        No products found
+      </div>
+    );
   }
 
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${cls}`}
-    >
-      {label} ({stock})
-    </span>
-  );
-};
-
-const getProductImage = (product) => {
-  return product.image_url || DEFAULT_PRODUCT_IMAGE;
-};
-
-const ProductTable = ({ products, onView, onEdit, onDelete }) => {
-  return (
-    <div className="relative w-full overflow-auto bg-white rounded-lg border border-gray-200">
-      <Table className="w-full text-sm">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+      <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Product</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Actions</TableHead>
+          <TableRow className="bg-gray-50">
+            <TableHead className="text-xs font-semibold text-gray-600 uppercase">
+              Product
+            </TableHead>
+            <TableHead className="text-xs font-semibold text-gray-600 uppercase">
+              Category
+            </TableHead>
+            <TableHead className="text-xs font-semibold text-gray-600 uppercase">
+              Price
+            </TableHead>
+            <TableHead className="text-xs font-semibold text-gray-600 uppercase">
+              Stock
+            </TableHead>
+            <TableHead className="text-xs font-semibold text-gray-600 uppercase">
+              Status
+            </TableHead>
+            {showActions && (
+              <TableHead className="text-xs font-semibold text-gray-600 uppercase">
+                Actions
+              </TableHead>
+            )}
           </TableRow>
         </TableHeader>
 
         <TableBody>
-          {products.map((p) => (
-            <TableRow key={p.id} className="hover:bg-gray-50">
-              {/* صورة + اسم + وصف قصير */}
+          {products.map((product) => (
+            <TableRow
+              key={product.id}
+              className="hover:bg-gray-50 transition-colors"
+            >
+              {/* Product names */}
               <TableCell>
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                    <img
-                      src={getProductImage(p)}
-                      alt={p.name}
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = DEFAULT_PRODUCT_IMAGE;
-                        e.currentTarget.onerror = null;
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">
-                      {p.name}
-                    </div>
-                    {p.description && (
-                      <div className="text-xs text-gray-500 line-clamp-1">
-                        {p.description}
-                      </div>
-                    )}
-                  </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-900">
+                    {product.name_en || product.name}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {product.name_ar}
+                  </span>
                 </div>
               </TableCell>
 
               {/* Category */}
               <TableCell>
-                <span className="inline-flex px-2 py-0.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200 text-xs">
-                  {p.category || "Uncategorized"}
-                </span>
+                <div className="text-sm text-gray-900">
+                  {product.category?.name_en || "-"}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {product.category?.name_ar}
+                </div>
               </TableCell>
 
               {/* Price */}
-              <TableCell>${Number(p.price).toFixed(2)}</TableCell>
+              <TableCell>
+                <span className="text-sm text-gray-900">
+                  {product.price} $
+                </span>
+              </TableCell>
 
               {/* Stock */}
               <TableCell>
-                {renderStockBadge(p.stock_quantity ?? 0)}
+                <span
+                  className={
+                    product.stock <= 0
+                      ? "text-sm text-red-600 font-medium"
+                      : "text-sm text-gray-900"
+                  }
+                >
+                  {product.stock}
+                </span>
+              </TableCell>
+
+              {/* Status */}
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={
+                    product.is_active
+                      ? "bg-green-50 border-green-200 text-green-800"
+                      : "bg-gray-50 border-gray-200 text-gray-700"
+                  }
+                >
+                  {product.is_active ? "Active" : "Inactive"}
+                </Badge>
               </TableCell>
 
               {/* Actions */}
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <button
-                    className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                    title="View product"
-                    onClick={() => onView?.(p)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button
-                    className="p-1 text-green-600 hover:bg-green-50 rounded"
-                    title="Edit product"
-                    onClick={() => onEdit?.(p)}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    className="p-1 text-red-600 hover:bg-red-50 rounded"
-                    title="Delete product"
-                    onClick={() => onDelete?.(p)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </TableCell>
+              {showActions && (
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onView(product)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(product)}
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                      title="Edit Product"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(product)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="Delete Product"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              )}
             </TableRow>
           ))}
-
-          {products.length === 0 && (
-            <TableRow>
-              <TableCell
-                colSpan={5}
-                className="px-4 py-6 text-center text-gray-500"
-              >
-                No products found.
-              </TableCell>
-            </TableRow>
-          )}
         </TableBody>
       </Table>
     </div>

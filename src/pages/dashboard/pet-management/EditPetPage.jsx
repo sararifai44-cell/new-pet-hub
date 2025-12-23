@@ -14,13 +14,13 @@ import {
 } from "../../../components/ui/card";
 
 import {
-  useGetPetsQuery,
+  useGetPetQuery, // ✅ بدل getPets
   useUpdatePetMutation,
 } from "../../../features/pet/petApiSlice";
 import { useGetPetTypesQuery } from "../../../features/petType/petTypeApiSlice";
 import { useGetPetBreedsQuery } from "../../../features/petBreed/petBreedApiSlice";
 
-// ---------- Helpers خارج الكومبوننت ----------
+// ---------- Helpers ----------
 
 const normalizePet = (found) => {
   if (!found) return null;
@@ -40,7 +40,6 @@ const normalizePet = (found) => {
 const mapPetTypes = (petTypesResponse) => {
   if (!petTypesResponse) return [];
   const raw = petTypesResponse.data ?? petTypesResponse;
-
   return raw.map((t) => ({
     type_id: t.id,
     name: t.name,
@@ -63,16 +62,48 @@ const mapBreeds = (petBreedsResponse) => {
   });
 };
 
-// ---------- الكومبوننت الرئيسي ----------
+const buildPartialPayload = (formData, originalPet) => {
+  const payload = {};
+  if (!originalPet) return payload;
+
+  if (formData.name !== originalPet.name) payload.name = formData.name;
+  if (formData.gender !== originalPet.gender) payload.gender = formData.gender;
+  if (formData.date_of_birth !== originalPet.date_of_birth) {
+    payload.date_of_birth = formData.date_of_birth;
+  }
+
+  const newDesc = formData.description ?? "";
+  const oldDesc = originalPet.description ?? "";
+  if (newDesc !== oldDesc) payload.description = newDesc;
+
+  if (!!formData.is_adoptable !== !!originalPet.is_adoptable) {
+    payload.is_adoptable = !!formData.is_adoptable;
+  }
+
+  if (formData.type_id !== originalPet.type_id) {
+    payload.pet_type_id = formData.type_id ? Number(formData.type_id) : null;
+  }
+
+  if (formData.breed_id !== originalPet.breed_id) {
+    payload.pet_breed_id = formData.breed_id ? Number(formData.breed_id) : null;
+  }
+
+  return payload;
+};
+
+// ---------- Component ----------
 
 const EditPetPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-
   const petId = Number(id);
 
-  const { data: petsResponse, isLoading: isPetsLoading } =
-    useGetPetsQuery();
+  // ✅ show endpoint
+  const {
+    data: petResponse,
+    isLoading: isPetLoading,
+    isError: isPetError,
+  } = useGetPetQuery(petId, { skip: !petId });
 
   const { data: petTypesResponse, isLoading: isTypesLoading } =
     useGetPetTypesQuery();
@@ -80,75 +111,83 @@ const EditPetPage = () => {
   const { data: petBreedsResponse, isLoading: isBreedsLoading } =
     useGetPetBreedsQuery();
 
-  const [updatePet, { isLoading: isUpdating }] =
-    useUpdatePetMutation();
+  const [updatePet, { isLoading: isUpdating }] = useUpdatePetMutation();
 
   const pet = useMemo(() => {
-    if (!petsResponse) return null;
+    if (!petResponse) return null;
+    // show ممكن يرجع {data: pet} أو pet مباشرة
+    const raw = petResponse.data ?? petResponse;
+    return normalizePet(raw);
+  }, [petResponse]);
 
-    const raw = petsResponse.data ?? petsResponse;
-    const found = raw.find((p) => p.id === petId);
+  const petTypes = useMemo(() => mapPetTypes(petTypesResponse), [petTypesResponse]);
+  const breeds = useMemo(() => mapBreeds(petBreedsResponse), [petBreedsResponse]);
 
-    return normalizePet(found);
-  }, [petsResponse, petId]);
-
-  const petTypes = useMemo(
-    () => mapPetTypes(petTypesResponse),
-    [petTypesResponse]
-  );
-
-  const breeds = useMemo(
-    () => mapBreeds(petBreedsResponse),
-    [petBreedsResponse]
-  );
-
-  // هذا لزر السبميت فقط
-  const isLoading =
-    isPetsLoading || isTypesLoading || isBreedsLoading || isUpdating;
+  const isLoading = isPetLoading || isTypesLoading || isBreedsLoading || isUpdating;
 
   const handleUpdatePet = async (dataFromForm) => {
     try {
-      console.log("data from form (edit):", dataFromForm);
+      const changes = buildPartialPayload(dataFromForm, pet);
 
-      const payload = {
-        id: petId,
-        ...dataFromForm,
-        description: dataFromForm.description ?? "",
-      };
+      if (Object.keys(changes).length === 0) {
+        navigate("/dashboard/pet-management");
+        return;
+      }
 
-      console.log("update payload:", payload);
-
+      const payload = { id: petId, ...changes };
       await updatePet(payload).unwrap();
 
       navigate("/dashboard/pet-management");
     } catch (error) {
       console.error("Failed to update pet:", error);
+      console.log("Backend validation:", error?.data);
     }
   };
 
-  // 🔹 حالة التحميل (أي داتا لسا ما وصلت)
-  if (isPetsLoading || isTypesLoading || isBreedsLoading) {
+  // Loading
+  if (isPetLoading || isTypesLoading || isBreedsLoading) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <p className="text-center text-gray-500">
-          Loading pet data...
-        </p>
+        <p className="text-center text-gray-500">Loading pet data...</p>
       </div>
     );
   }
 
-  // 🔹 حالة عدم وجود الحيوان
-  if (!pet) {
+  // API Error
+  if (isPetError) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <Card className="shadow-sm border border-slate-100 bg-white">
           <CardContent className="py-10 flex flex-col items-center gap-3">
             <p className="text-lg font-semibold text-slate-900">
-              Pet not found
+              Failed to load pet
             </p>
             <p className="text-sm text-slate-500 text-center max-w-md">
-              The pet you are trying to edit does not exist or may have
-              been removed.
+              Something went wrong while loading this pet.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-2"
+              onClick={() => navigate("/dashboard/pet-management")}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Pets
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Not found
+  if (!pet) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <Card className="shadow-sm border border-slate-100 bg-white">
+          <CardContent className="py-10 flex flex-col items-center gap-3">
+            <p className="text-lg font-semibold text-slate-900">Pet not found</p>
+            <p className="text-sm text-slate-500 text-center max-w-md">
+              The pet you are trying to edit does not exist or may have been removed.
             </p>
             <Button
               variant="outline"

@@ -9,13 +9,12 @@ import {
 } from '../../lib/constants.jsx'
 
 const baseLinkClasses =
-  'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:no-underline'
+  'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-5 transition-colors hover:no-underline'
 
 export default function Sidebar() {
   const location = useLocation()
   const { pathname } = location
 
-  // نحدد أي group لازم يكون مفتوح حسب المسار الحالي (بشرط التطابق التام)
   const [openGroupKey, setOpenGroupKey] = useState(() => {
     const activeGroup = DASHBOARD_SIDEBAR_LINKS.find((link) =>
       link.children?.some((child) => pathname === child.path)
@@ -28,16 +27,16 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="bg-neutral-950 border-r border-neutral-800 w-72 p-4 flex flex-col text-white">
+    <div className="bg-neutral-950 border-r border-neutral-800 w-60 p-3 flex flex-col text-white">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-1 py-3 mb-2">
-        <span className="text-neutral-100 text-lg font-bold tracking-tight">
-          PetHub <span className="text-2xl">🐾</span>
+      <div className="flex items-center gap-2 px-1 py-2 mb-2">
+        <span className="text-neutral-100 text-base font-bold tracking-tight">
+          PetHub <span className="text-lg">🐾</span>
         </span>
       </div>
 
       {/* Top Links */}
-      <div className="py-4 flex-1 flex flex-col gap-1">
+      <div className="py-3 flex-1 flex flex-col gap-1">
         {DASHBOARD_SIDEBAR_LINKS.map((link) =>
           link.children ? (
             <SidebarGroup
@@ -65,7 +64,7 @@ export default function Sidebar() {
             'text-red-400 hover:bg-red-950/30 hover:text-red-300 mt-1'
           )}
         >
-          <span className="text-xl">
+          <span className="text-lg">
             <HiOutlineLogout />
           </span>
           <span>Sign Out</span>
@@ -77,8 +76,6 @@ export default function Sidebar() {
 
 function SidebarGroup({ link, isOpen, onToggle }) {
   const { pathname } = useLocation()
-
-  // المجموعة تعتبر Active إذا في طفل path تبعه يطابق بالضبط
   const isGroupActive = link.children?.some((child) => pathname === child.path)
 
   return (
@@ -96,21 +93,22 @@ function SidebarGroup({ link, isOpen, onToggle }) {
       >
         <span className="flex items-center gap-2">
           {link.icon && (
-            <span className="text-xl flex-shrink-0 text-neutral-300">
+            <span className="text-lg flex-shrink-0 text-neutral-300">
               {link.icon}
             </span>
           )}
           <span>{link.label}</span>
         </span>
+
         {isOpen ? (
-          <ChevronDown className="w-4 h-4 text-neutral-400" />
+          <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-neutral-500" />
+          <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
         )}
       </button>
 
       {isOpen && (
-        <div className="mt-1 ml-4 flex flex-col gap-0.5">
+        <div className="mt-1 ml-3 flex flex-col gap-0.5">
           {link.children.map((child) => (
             <SidebarLink key={child.key} link={child} isChild />
           ))}
@@ -122,8 +120,6 @@ function SidebarGroup({ link, isOpen, onToggle }) {
 
 function SidebarLink({ link, isChild = false }) {
   const { pathname } = useLocation()
-
-  // ✅ بس الصفحة اللي path تبعها يطابق بالضبط
   const isActive = pathname === link.path
 
   return (
@@ -134,11 +130,11 @@ function SidebarLink({ link, isChild = false }) {
         isActive
           ? 'bg-neutral-800 text-white border-r-4 border-indigo-500 pr-2'
           : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100',
-        isChild && 'text-sm pl-5'
+        isChild && 'text-[12.5px] pl-4 py-1.5'
       )}
     >
       {link.icon && !isChild && (
-        <span className="text-xl flex-shrink-0 text-neutral-300">
+        <span className="text-lg flex-shrink-0 text-neutral-300">
           {link.icon}
         </span>
       )}
