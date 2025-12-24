@@ -7,28 +7,40 @@ export const petFormSchema = z.object({
   breed_id: z.string().min(1, "Please select a breed"),
   date_of_birth: z.string().min(1, "Please select date of birth"),
 
-  // ✅ enforce backend allowed values
   gender: z.enum(["male", "female"], {
     required_error: "Please select gender",
     invalid_type_error: "Please select gender",
   }),
 
-  description: z
-    .string()
-    .min(3, "Description is required and must be at least 3 characters"),
+  // ✅ backend يسمح null
+  description: z.string().optional().nullable(),
 
   is_adoptable: z.boolean().default(false),
 });
 
-export const getPetDefaultValues = (initialData = {}) => ({
-  name: initialData.name || "",
-  type_id: initialData.type_id || "",
-  breed_id: initialData.breed_id || "",
-  date_of_birth: initialData.date_of_birth || "",
+export const getPetDefaultValues = (initialData = {}) => {
+  const typeId =
+    initialData?.pet_type?.id ??
+    initialData?.pet_type_id ??
+    initialData?.type_id ??
+    "";
 
-  // ✅ ensure lowercase + only expected values
-  gender: initialData.gender ? String(initialData.gender).toLowerCase() : "",
+  const breedId =
+    initialData?.pet_breed?.id ??
+    initialData?.pet_breed_id ??
+    initialData?.breed_id ??
+    "";
 
-  description: initialData.description || "",
-  is_adoptable: !!initialData.is_adoptable,
-});
+  return {
+    name: initialData?.name || "",
+    type_id: typeId ? String(typeId) : "",
+    breed_id: breedId ? String(breedId) : "",
+    date_of_birth: initialData?.date_of_birth || "",
+
+    gender: initialData?.gender ? String(initialData.gender).toLowerCase() : "",
+
+    // ✅ لو null خليها ""
+    description: initialData?.description ?? "",
+    is_adoptable: !!initialData?.is_adoptable,
+  };
+};

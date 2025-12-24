@@ -1,29 +1,27 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import Cookies from "js-cookie";
 
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://127.0.0.1:8000/api/",
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api",
+    credentials: "omit", // ✅ بدل include
     prepareHeaders: (headers) => {
-      const token = Cookies.get("token");
-
-      // language: من المتصفح أو لو بدك من localStorage
-      const lang =
-        localStorage.getItem("lang") ||
-        (navigator.language?.toLowerCase().startsWith("ar") ? "ar" : "en");
-
       headers.set("Accept", "application/json");
-      headers.set("Accept-Language", lang);
+
+      const lang = (navigator.language || "en").toLowerCase();
+      headers.set("Accept-Language", lang.startsWith("ar") ? "ar" : "en");
+
+      const token = document.cookie
+        .split("; ")
+        .find((x) => x.startsWith("token="))
+        ?.split("=")[1];
 
       if (token) headers.set("Authorization", `Bearer ${token}`);
-
-      // ملاحظة: خليها بس لطلبات JSON (إذا عندك upload لاحقاً بنشيلها هناك)
-      headers.set("Content-Type", "application/json");
 
       return headers;
     },
   }),
-  tagTypes: ["PetType", "Pet", "User", "PetBreed", "Product"],
+
+  tagTypes: ["Pet", "Pets", "PetType", "PetBreed"],
   endpoints: () => ({}),
 });

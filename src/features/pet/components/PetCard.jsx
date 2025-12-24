@@ -1,6 +1,29 @@
 import React from "react";
-import { Eye, Edit3, Heart } from "lucide-react";
-import { defaultPetImages } from "../../lib/mockData";
+import { Eye, Edit3, Heart, Image as ImageIcon } from "lucide-react";
+
+const pickImageUrl = (pet) => {
+  // index: cover_image (string)
+  if (pet?.cover_image) return pet.cover_image;
+
+  // fallback لو في images array بأي response
+  const img = Array.isArray(pet?.images) ? pet.images[0] : null;
+  if (!img) return "";
+  if (typeof img === "string") return img;
+  if (typeof img === "object") return img.url || img.original_url || img.preview_url || "";
+  return "";
+};
+
+const calculateAge = (dateOfBirth) => {
+  if (!dateOfBirth) return "-";
+  const dob = new Date(dateOfBirth);
+  if (Number.isNaN(dob.getTime())) return "-";
+
+  const now = new Date();
+  let years = now.getFullYear() - dob.getFullYear();
+  const m = now.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) years--;
+  return years >= 0 ? years : "-";
+};
 
 const PetCard = ({
   pet,
@@ -9,31 +32,27 @@ const PetCard = ({
   onToggleAdoption,
   showActions = true,
 }) => {
-  const getDefaultImage = (typeName) => {
-    if (!typeName) return defaultPetImages.cat;
-    const key = typeName.toLowerCase(); // "Cat" -> "cat"
-    return defaultPetImages[key] || defaultPetImages.cat;
-  };
-
-  const getPetImage = (pet) => {
-    return pet.images && pet.images.length > 0
-      ? pet.images[0]
-      : getDefaultImage(pet.breed?.type?.name);
-  };
-
-  const calculateAge = (dateOfBirth) => {
-    return new Date().getFullYear() - new Date(dateOfBirth).getFullYear();
-  };
+  const imgUrl = pickImageUrl(pet);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
       {/* Pet Image */}
       <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
-        <img
-          src={getPetImage(pet)}
-          alt={pet.name}
-          className="w-full h-full object-cover"
-        />
+        {imgUrl ? (
+          <img
+            src={imgUrl}
+            alt={pet.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full grid place-items-center text-gray-400">
+            <div className="flex flex-col items-center gap-2">
+              <ImageIcon className="w-8 h-8" />
+              <span className="text-xs">No image</span>
+            </div>
+          </div>
+        )}
+
         <div className="absolute top-3 right-3">
           <span
             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -51,21 +70,16 @@ const PetCard = ({
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h3 className="font-semibold text-gray-900 text-lg">
-              {pet.name}
-            </h3>
+            <h3 className="font-semibold text-gray-900 text-lg">{pet.name}</h3>
             <p className="text-gray-600 text-sm capitalize">
-              {pet.gender.toLowerCase()} •{" "}
-              {calculateAge(pet.date_of_birth)} years
+              {pet.gender?.toLowerCase?.() || "-"} • {calculateAge(pet.date_of_birth)} years
             </p>
           </div>
         </div>
 
         <div className="mb-3">
           <p className="text-sm text-gray-700">
-            <span className="font-medium">
-              {pet.breed?.type?.name}
-            </span>
+            <span className="font-medium">{pet.breed?.type?.name}</span>
             {pet.breed?.name && ` • ${pet.breed.name}`}
           </p>
           {pet.owner && (
@@ -109,9 +123,7 @@ const PetCard = ({
                   : "text-green-600 hover:bg-green-50"
               }`}
               title={
-                pet.is_adoptable
-                  ? "Mark as Not Available"
-                  : "Mark as Available"
+                pet.is_adoptable ? "Mark as Not Available" : "Mark as Available"
               }
             >
               <Heart
