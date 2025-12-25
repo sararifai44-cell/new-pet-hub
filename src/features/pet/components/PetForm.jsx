@@ -22,14 +22,13 @@ const normalizeExistingImages = (data) => {
       .filter(Boolean);
   }
 
-  // fallback: cover_image (من index أو show)
   if (data?.cover_image) return [{ id: "cover", url: data.cover_image }];
 
   return [];
 };
 
 const PetForm = ({
-  initialData = null, // ✅ مهم: لا تحطي {} هون (بيسبب reset كل رندر)
+  initialData = null,
   onSubmit,
   isSubmitting = false,
   petTypes = [],
@@ -40,7 +39,7 @@ const PetForm = ({
 
   const defaultValues = useMemo(() => {
     return getPetDefaultValues(initialData || {});
-  }, [petId]); // ✅ فقط لما يتغير الـ id
+  }, [petId]);
 
   const {
     register,
@@ -69,8 +68,6 @@ const PetForm = ({
     });
   };
 
-  // ✅ هذا هو سبب الـ Maximum update depth سابقاً
-  // صار يعمل reset كل رندر لأن initialData كانت {} جديدة كل مرة
   useEffect(() => {
     reset(getPetDefaultValues(initialData || {}));
     setExistingImages(normalizeExistingImages(initialData || {}));
@@ -78,10 +75,9 @@ const PetForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [petId, reset]);
 
-  const typeId = watch("type_id"); // string
+  const typeId = watch("type_id");
   const prevTypeRef = useRef(undefined);
 
-  // عند تغيير النوع → فضّي breed مرة وحدة بدون لوب
   useEffect(() => {
     if (prevTypeRef.current === undefined) {
       prevTypeRef.current = typeId;
@@ -98,7 +94,11 @@ const PetForm = ({
     return (breeds || []).filter((b) => {
       if (!tid) return true;
       const bt =
-        b?.pet_type?.id ?? b?.pet_type_id ?? b?.type_id ?? b?.petType?.id ?? null;
+        b?.pet_type?.id ??
+        b?.pet_type_id ??
+        b?.type_id ??
+        b?.petType?.id ??
+        null;
       return Number(bt) === tid;
     });
   }, [breeds, typeId]);
@@ -138,7 +138,6 @@ const PetForm = ({
 
   useEffect(() => {
     return () => {
-      // cleanup
       newImages.forEach((x) => x?.previewUrl && URL.revokeObjectURL(x.previewUrl));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,7 +148,6 @@ const PetForm = ({
   const handleFormSubmit = (data) => {
     const fd = new FormData();
 
-    // لأن updatePet عندك POST + _method=PATCH
     if (isEdit) fd.append("_method", "PATCH");
 
     fd.append("pet_type_id", String(Number(data.type_id)));
@@ -159,12 +157,24 @@ const PetForm = ({
     fd.append("gender", String(data.gender));
     fd.append("date_of_birth", String(data.date_of_birth));
 
-    const desc = (data.description ?? "").toString();
-    fd.append("description", desc); // ✅ backend يسمح null/empty
+    // ✅ nullable|string behavior:
+    // - if empty on CREATE => don't send (backend sees null)
+    // - if empty on EDIT and there was an old description => send "" to clear it
+    const currentDesc =
+      data.description == null ? "" : String(data.description).trim();
+
+    const initialDesc =
+      initialData?.description == null ? "" : String(initialData.description).trim();
+
+    if (currentDesc) {
+      fd.append("description", currentDesc);
+    } else if (isEdit && initialDesc) {
+      fd.append("description", "");
+    }
+    // else: do not append description
 
     fd.append("is_adoptable", data.is_adoptable ? "1" : "0");
 
-    // ✅ images[] رفع جديد فقط
     newImages.forEach(({ file }) => {
       if (file) fd.append("images[]", file);
     });
@@ -272,7 +282,9 @@ const PetForm = ({
               <Input
                 type="date"
                 {...register("date_of_birth")}
-                className={`pl-10 ${errors.date_of_birth ? "border-red-300 bg-red-50" : ""}`}
+                className={`pl-10 ${
+                  errors.date_of_birth ? "border-red-300 bg-red-50" : ""
+                }`}
                 lang="en"
               />
             </div>
@@ -361,8 +373,16 @@ const PetForm = ({
           {...register("description")}
           rows={4}
           placeholder="Describe the pet's personality, habits, special needs..."
-          className="resize-none"
+          className={`resize-none ${
+            errors.description ? "border-red-300 bg-red-50" : ""
+          }`}
         />
+        {errors.description && (
+          <p className="text-red-500 text-xs">{errors.description.message}</p>
+        )}
+        <p className="text-xs text-gray-500">
+          Optional (if left empty it will be saved as null)
+        </p>
       </div>
 
       {/* Adoptable */}
@@ -386,7 +406,11 @@ const PetForm = ({
 
       {/* Submit */}
       <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
-        <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex items-center gap-2"
+        >
           {isSubmitting ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

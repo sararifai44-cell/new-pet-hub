@@ -1,11 +1,6 @@
-import React, { useState } from "react";
-import {
-  Search,
-  Filter,
-  X,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+// src/features/pet/components/PetFilters.jsx
+import React, { useMemo, useState } from "react";
+import { Search, Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
@@ -23,11 +18,25 @@ const PetFilters = ({
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const hasActiveFilters = Boolean(
+    filters?.search ||
+      filters?.type ||
+      filters?.breed ||
+      filters?.status ||
+      filters?.gender
+  );
+
+  const activeCount = useMemo(
+    () => Object.values(filters || {}).filter(Boolean).length,
+    [filters]
+  );
+
   const handleSearchChange = (value) => {
     onFilterChange({ ...filters, search: value });
   };
 
   const handleTypeChange = (typeId) => {
+    // ✅ لما يتغير النوع لازم نفضّي الـ breed
     onFilterChange({ ...filters, type: typeId, breed: "" });
   };
 
@@ -43,57 +52,60 @@ const PetFilters = ({
     onFilterChange({ ...filters, gender });
   };
 
-  const hasActiveFilters =
-    filters.search ||
-    filters.type ||
-    filters.breed ||
-    filters.status ||
-    filters.gender;
-
   const removeFilter = (filterKey) => {
+    // ✅ إذا شلنا type لازم كمان نشيل breed
+    if (filterKey === "type") {
+      onFilterChange({ ...filters, type: "", breed: "" });
+      return;
+    }
     onFilterChange({ ...filters, [filterKey]: "" });
   };
 
-  const getTypeName = (typeId) => {
-    return (
-      petTypes.find((type) => type.type_id == typeId)?.name || typeId
-    );
-  };
+  const getTypeName = (typeId) =>
+    petTypes.find((t) => String(t.type_id) === String(typeId))?.name || typeId;
 
-  const getBreedName = (breedId) => {
-    return (
-      breeds.find((breed) => breed.breed_id == breedId)?.name ||
-      breedId
+  const getBreedName = (breedId) =>
+    breeds.find((b) => String(b.breed_id) === String(breedId))?.name || breedId;
+
+  const filteredBreeds = useMemo(() => {
+    if (!filters?.type) return breeds;
+    return breeds.filter(
+      (b) => Number(b.type_id) === Number(filters.type)
     );
-  };
+  }, [breeds, filters?.type]);
 
   return (
-    <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <Filter size={20} />
-          Filters
-          {hasActiveFilters && (
-            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-              {Object.values(filters).filter(Boolean).length} active
-            </span>
-          )}
-        </h3>
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+      {/* Header */}
+      <div className="p-4 md:p-5 flex items-center justify-between gap-3 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+            <Filter className="w-4 h-4 text-slate-700" />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <h3 className="text-base md:text-lg font-semibold text-slate-900">
+              Filters
+            </h3>
+
+            {hasActiveFilters && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                {activeCount} active
+              </span>
+            )}
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-gray-600 hover:text-gray-800 flex items-center gap-1"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="text-slate-600 hover:text-slate-900 flex items-center gap-1"
           >
             {showAdvanced ? "Hide Options" : "More Options"}
-            {showAdvanced ? (
-              <ChevronUp size={16} />
-            ) : (
-              <ChevronDown size={16} />
-            )}
+            {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </Button>
 
           {hasActiveFilters && (
@@ -105,27 +117,28 @@ const PetFilters = ({
               className="text-red-600 hover:text-red-700 flex items-center gap-1"
             >
               <X size={16} />
-              Reset All
+              Reset
             </Button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Main filters */}
+      <div className="p-4 md:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {showSearch && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Search
             </label>
             <div className="relative">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 size={18}
               />
               <Input
                 type="text"
-                placeholder="Search by name, breed, or owner..."
-                value={filters.search || ""}
+                placeholder="Search by name, type, breed..."
+                value={filters?.search || ""}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
               />
@@ -135,13 +148,14 @@ const PetFilters = ({
 
         {showTypeFilter && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Pet Type
             </label>
             <select
-              value={filters.type || ""}
+              value={filters?.type || ""}
               onChange={(e) => handleTypeChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-300"
             >
               <option value="">All Types</option>
               {petTypes.map((type) => (
@@ -155,43 +169,37 @@ const PetFilters = ({
 
         {showTypeFilter && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Breed
             </label>
             <select
-              value={filters.breed || ""}
+              value={filters?.breed || ""}
               onChange={(e) => handleBreedChange(e.target.value)}
-              disabled={!filters.type}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
+              disabled={!filters?.type}
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-300
+                         disabled:bg-slate-50 disabled:text-slate-400"
             >
               <option value="">All Breeds</option>
-              {breeds
-                .filter(
-                  (breed) =>
-                    !filters.type ||
-                    breed.type_id === parseInt(filters.type)
-                )
-                .map((breed) => (
-                  <option
-                    key={breed.breed_id}
-                    value={breed.breed_id}
-                  >
-                    {breed.name}
-                  </option>
-                ))}
+              {filteredBreeds.map((breed) => (
+                <option key={breed.breed_id} value={breed.breed_id}>
+                  {breed.name}
+                </option>
+              ))}
             </select>
           </div>
         )}
 
         {showStatusFilter && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               Status
             </label>
             <select
-              value={filters.status || ""}
+              value={filters?.status || ""}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white
+                         focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-300"
             >
               <option value="">All Status</option>
               <option value="available">Available</option>
@@ -201,107 +209,116 @@ const PetFilters = ({
         )}
       </div>
 
+      {/* Advanced */}
       {showAdvanced && (
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-sm text-gray-600 mb-3">
-            Additional filtering options
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Gender
-              </label>
-              <select
-                value={filters.gender || ""}
-                onChange={(e) =>
-                  handleGenderChange(e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">All Genders</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
+        <div className="px-4 md:px-5 pb-4 md:pb-5 pt-0 border-t border-slate-100">
+          <div className="pt-4">
+            <p className="text-sm text-slate-500 mb-3">
+              Additional filtering options
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Gender
+                </label>
+                <select
+                  value={filters?.gender || ""}
+                  onChange={(e) => handleGenderChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white
+                             focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-300"
+                >
+                  <option value="">All Genders</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Active badges */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
-          {filters.search && (
-            <Badge
-              variant="outline"
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs"
-            >
-              Search: {filters.search}
-              <button
-                onClick={() => removeFilter("search")}
-                className="ml-1 text-blue-600 hover:text-blue-800"
+        <div className="px-4 md:px-5 pb-4 md:pb-5">
+          <div className="pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+            {filters?.search && (
+              <Badge variant="outline" className="inline-flex items-center gap-1 px-2 py-1 text-xs">
+                Search: {filters.search}
+                <button
+                  type="button"
+                  onClick={() => removeFilter("search")}
+                  className="ml-1 text-blue-600 hover:text-blue-800"
+                >
+                  ×
+                </button>
+              </Badge>
+            )}
+
+            {filters?.type && (
+              <Badge
+                variant="outline"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-50 border-green-200 text-green-800"
               >
-                ×
-              </button>
-            </Badge>
-          )}
-          {filters.type && (
-            <Badge
-              variant="outline"
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-50 border-green-200 text-green-800"
-            >
-              Type: {getTypeName(filters.type)}
-              <button
-                onClick={() => removeFilter("type")}
-                className="ml-1 text-green-600 hover:text-green-800"
+                Type: {getTypeName(filters.type)}
+                <button
+                  type="button"
+                  onClick={() => removeFilter("type")}
+                  className="ml-1 text-green-700 hover:text-green-900"
+                >
+                  ×
+                </button>
+              </Badge>
+            )}
+
+            {filters?.breed && (
+              <Badge
+                variant="outline"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-purple-50 border-purple-200 text-purple-800"
               >
-                ×
-              </button>
-            </Badge>
-          )}
-          {filters.breed && (
-            <Badge
-              variant="outline"
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-purple-50 border-purple-200 text-purple-800"
-            >
-              Breed: {getBreedName(filters.breed)}
-              <button
-                onClick={() => removeFilter("breed")}
-                className="ml-1 text-purple-600 hover:text-purple-800"
+                Breed: {getBreedName(filters.breed)}
+                <button
+                  type="button"
+                  onClick={() => removeFilter("breed")}
+                  className="ml-1 text-purple-700 hover:text-purple-900"
+                >
+                  ×
+                </button>
+              </Badge>
+            )}
+
+            {filters?.status && (
+              <Badge
+                variant="outline"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-orange-50 border-orange-200 text-orange-800"
               >
-                ×
-              </button>
-            </Badge>
-          )}
-          {filters.status && (
-            <Badge
-              variant="outline"
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-orange-50 border-orange-200 text-orange-800"
-            >
-              Status:{" "}
-              {filters.status === "available"
-                ? "Available"
-                : "Not Available"}
-              <button
-                onClick={() => removeFilter("status")}
-                className="ml-1 text-orange-600 hover:text-orange-800"
+                Status: {filters.status === "available" ? "Available" : "Not Available"}
+                <button
+                  type="button"
+                  onClick={() => removeFilter("status")}
+                  className="ml-1 text-orange-700 hover:text-orange-900"
+                >
+                  ×
+                </button>
+              </Badge>
+            )}
+
+            {filters?.gender && (
+              <Badge
+                variant="outline"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-pink-50 border-pink-200 text-pink-800"
               >
-                ×
-              </button>
-            </Badge>
-          )}
-          {filters.gender && (
-            <Badge
-              variant="outline"
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-pink-50 border-pink-200 text-pink-800"
-            >
-              Gender: {filters.gender}
-              <button
-                onClick={() => removeFilter("gender")}
-                className="ml-1 text-pink-600 hover:text-pink-800"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
+                Gender: {filters.gender}
+                <button
+                  type="button"
+                  onClick={() => removeFilter("gender")}
+                  className="ml-1 text-pink-700 hover:text-pink-900"
+                >
+                  ×
+                </button>
+              </Badge>
+            )}
+          </div>
         </div>
       )}
     </div>

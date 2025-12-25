@@ -12,8 +12,14 @@ export const petFormSchema = z.object({
     invalid_type_error: "Please select gender",
   }),
 
-  // ✅ backend يسمح null
-  description: z.string().optional().nullable(),
+  // ✅ nullable|string (backend behavior):
+  // - empty / whitespace => null
+  // - if provided => must be string
+  description: z.preprocess((v) => {
+    if (v == null) return null;
+    const s = String(v).trim();
+    return s === "" ? null : s;
+  }, z.string().nullable().optional()),
 
   is_adoptable: z.boolean().default(false),
 });
@@ -39,8 +45,11 @@ export const getPetDefaultValues = (initialData = {}) => {
 
     gender: initialData?.gender ? String(initialData.gender).toLowerCase() : "",
 
-    // ✅ لو null خليها ""
-    description: initialData?.description ?? "",
+    // ✅ keep form controlled (textarea always string)
+    // submit-time preprocess will convert "" -> null
+    description:
+      initialData?.description == null ? "" : String(initialData.description),
+
     is_adoptable: !!initialData?.is_adoptable,
   };
 };
