@@ -1,21 +1,8 @@
 import React, { useState, useMemo } from "react";
-import {
-  Trash2,
-  Plus,
-  CheckCircle2,
-  Pencil,
-  Shapes,
-  GitBranch,
-  Sparkles,
-} from "lucide-react";
+import { Trash2, Plus, Pencil } from "lucide-react";
 
 import { Button } from "../../../components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../../components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import {
@@ -46,7 +33,6 @@ import {
 
 const mapTypesFromResponse = (petTypesResponse) => {
   if (!petTypesResponse) return [];
-
   const raw = petTypesResponse.data ?? petTypesResponse;
 
   return raw.map((t) => ({
@@ -71,6 +57,8 @@ const getBreedsCountForType = (types, typeId) => {
 const filterTypesList = (types, search) => {
   const q = search.trim().toLowerCase();
   if (!q) return types;
+
+  // البحث يبقى EN/AR
   return types.filter(
     (t) =>
       (t.name_en || t.name || "").toLowerCase().includes(q) ||
@@ -83,12 +71,35 @@ const filterBreedsList = (selectedType, search) => {
   const q = search.trim().toLowerCase();
   const list = selectedType.breeds || [];
   if (!q) return list;
+
   return list.filter(
     (b) =>
       (b.name_en || b.name || "").toLowerCase().includes(q) ||
       (b.name_ar || "").toLowerCase().includes(q)
   );
 };
+
+const getInitial = (name) => {
+  const s = String(name ?? "").trim();
+  return s ? s[0].toUpperCase() : "?";
+};
+
+function TypeAvatar({ name }) {
+  const initial = getInitial(name);
+  return (
+    <div className="w-10 h-10 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center flex-shrink-0">
+      <span className="text-slate-700 font-medium">{initial}</span>
+    </div>
+  );
+}
+
+function BreedIndexBadge({ n }) {
+  return (
+    <div className="w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 grid place-items-center flex-shrink-0">
+      <span className="text-slate-700 font-medium text-sm">{n}</span>
+    </div>
+  );
+}
 
 // ---------- الكومبوننت الرئيسي ----------
 
@@ -99,24 +110,15 @@ const PetTypesBreedsPage = () => {
     isError: isTypesError,
   } = useGetPetTypesQuery();
 
-  const [createPetType, { isLoading: isCreatingType }] =
-    useCreatePetTypeMutation();
-  const [deletePetType, { isLoading: isDeletingType }] =
-    useDeletePetTypeMutation();
-  const [updatePetType, { isLoading: isUpdatingType }] =
-    useUpdatePetTypeMutation();
+  const [createPetType, { isLoading: isCreatingType }] = useCreatePetTypeMutation();
+  const [deletePetType, { isLoading: isDeletingType }] = useDeletePetTypeMutation();
+  const [updatePetType, { isLoading: isUpdatingType }] = useUpdatePetTypeMutation();
 
-  const [createPetBreed, { isLoading: isCreatingBreed }] =
-    useCreatePetBreedMutation();
-  const [deletePetBreed, { isLoading: isDeletingBreed }] =
-    useDeletePetBreedMutation();
-  const [updatePetBreed, { isLoading: isUpdatingBreed }] =
-    useUpdatePetBreedMutation();
+  const [createPetBreed, { isLoading: isCreatingBreed }] = useCreatePetBreedMutation();
+  const [deletePetBreed, { isLoading: isDeletingBreed }] = useDeletePetBreedMutation();
+  const [updatePetBreed, { isLoading: isUpdatingBreed }] = useUpdatePetBreedMutation();
 
-  const types = useMemo(
-    () => mapTypesFromResponse(petTypesResponse),
-    [petTypesResponse]
-  );
+  const types = useMemo(() => mapTypesFromResponse(petTypesResponse), [petTypesResponse]);
 
   const [selectedTypeId, setSelectedTypeId] = useState(null);
 
@@ -125,6 +127,8 @@ const PetTypesBreedsPage = () => {
     const found = types.find((t) => t.type_id === selectedTypeId);
     return found ?? types[0];
   }, [types, selectedTypeId]);
+
+  const selectedTypeName = selectedType?.name_en || selectedType?.name || "-";
 
   const [typeSearch, setTypeSearch] = useState("");
   const [breedSearch, setBreedSearch] = useState("");
@@ -142,25 +146,21 @@ const PetTypesBreedsPage = () => {
   const [breedError, setBreedError] = useState("");
 
   // Delete dialog (type / breed)
-  const [deleteTarget, setDeleteTarget] = useState(null); // type or breed
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteMode, setDeleteMode] = useState(null); // "type" | "breed"
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const isDeleting = isDeletingType || isDeletingBreed;
 
-  // ---------- Edit dialogs state ----------
-
   // Edit type
-  const [isEditTypeDialogOpen, setIsEditTypeDialogOpen] =
-    useState(false);
+  const [isEditTypeDialogOpen, setIsEditTypeDialogOpen] = useState(false);
   const [typeBeingEdited, setTypeBeingEdited] = useState(null);
   const [editTypeNameEn, setEditTypeNameEn] = useState("");
   const [editTypeNameAr, setEditTypeNameAr] = useState("");
   const [editTypeError, setEditTypeError] = useState("");
 
   // Edit breed
-  const [isEditBreedDialogOpen, setIsEditBreedDialogOpen] =
-    useState(false);
+  const [isEditBreedDialogOpen, setIsEditBreedDialogOpen] = useState(false);
   const [breedBeingEdited, setBreedBeingEdited] = useState(null);
   const [editBreedNameEn, setEditBreedNameEn] = useState("");
   const [editBreedNameAr, setEditBreedNameAr] = useState("");
@@ -180,10 +180,9 @@ const PetTypesBreedsPage = () => {
       if (deleteMode === "type") {
         await deletePetType(deleteTarget.type_id).unwrap();
 
+        // إذا حذفنا النوع المختار، نختار أول نوع متبقّي
         if (selectedType?.type_id === deleteTarget.type_id) {
-          const remaining = types.filter(
-            (t) => t.type_id !== deleteTarget.type_id
-          );
+          const remaining = types.filter((t) => t.type_id !== deleteTarget.type_id);
           setSelectedTypeId(remaining[0]?.type_id ?? null);
         }
       } else if (deleteMode === "breed") {
@@ -191,10 +190,7 @@ const PetTypesBreedsPage = () => {
       }
     } catch (error) {
       console.error("Delete error:", error);
-      alert(
-        error?.data?.message ||
-          "Failed to delete item. Please try again."
-      );
+      alert(error?.data?.message || "Failed to delete item. Please try again.");
     } finally {
       closeDeleteDialog();
     }
@@ -229,34 +225,23 @@ const PetTypesBreedsPage = () => {
       };
 
       const result = await createPetType(payload).unwrap();
-
       const createdId = result.type_id ?? result.id ?? null;
-      if (createdId) {
-        setSelectedTypeId(createdId);
-      }
+      if (createdId) setSelectedTypeId(createdId);
 
       setTypeNameEn("");
       setTypeNameAr("");
       setIsTypeDialogOpen(false);
     } catch (error) {
       console.error(error);
-      setTypeError(
-        error?.data?.message ||
-          "Failed to create pet type. Please try again."
-      );
+      setTypeError(error?.data?.message || "Failed to create pet type. Please try again.");
     }
   };
 
   const handleDeleteType = (type) => {
-    const hasBreeds = (type.breeds || []).length > 0;
-    if (hasBreeds) {
-      alert("You cannot delete a type that has breeds linked to it.");
-      return;
-    }
-
+    // ✅ صار مسموح الحذف حتى لو في breeds (الباك لازم يعمل cascade)
     setDeleteMode("type");
     setDeleteTarget(type);
-    setIsDeleteDialogOpen(true); // 🚩 هون منفتح ConfirmDeleteDialog
+    setIsDeleteDialogOpen(true);
   };
 
   const openEditTypeDialog = (type) => {
@@ -306,10 +291,7 @@ const PetTypesBreedsPage = () => {
       setEditTypeNameAr("");
     } catch (error) {
       console.error("update type error:", error);
-      setEditTypeError(
-        error?.data?.message ||
-          "Failed to update pet type. Please try again."
-      );
+      setEditTypeError(error?.data?.message || "Failed to update pet type. Please try again.");
     }
   };
 
@@ -360,20 +342,17 @@ const PetTypesBreedsPage = () => {
 
       const apiMessage =
         error?.data?.message ||
-        (error?.data?.errors &&
-          Object.values(error.data.errors || {})[0]?.[0]) ||
+        (error?.data?.errors && Object.values(error.data.errors || {})[0]?.[0]) ||
         null;
 
-      setBreedError(
-        apiMessage || "Failed to create breed. Please try again."
-      );
+      setBreedError(apiMessage || "Failed to create breed. Please try again.");
     }
   };
 
   const handleDeleteBreed = (breed) => {
     setDeleteMode("breed");
     setDeleteTarget(breed);
-    setIsDeleteDialogOpen(true); // 🚩 لما نكبس حذف سلالة، منفتح ConfirmDeleteDialog
+    setIsDeleteDialogOpen(true);
   };
 
   const openEditBreedDialog = (breed) => {
@@ -398,17 +377,13 @@ const PetTypesBreedsPage = () => {
 
     const exists =
       selectedType.breeds?.some((b) => {
-        if (b.breed_id === breedBeingEdited.breed_id) {
-          return false;
-        }
+        if (b.breed_id === breedBeingEdited.breed_id) return false;
         const existing = (b.name_en || b.name || "").toLowerCase();
         return existing === trimmedEn.toLowerCase();
       }) ?? false;
 
     if (exists) {
-      setEditBreedError(
-        "This breed already exists for this type."
-      );
+      setEditBreedError("This breed already exists for this type.");
       return;
     }
 
@@ -431,31 +406,22 @@ const PetTypesBreedsPage = () => {
 
       const apiMessage =
         error?.data?.message ||
-        (error?.data?.errors &&
-          Object.values(error.data.errors || {})[0]?.[0]) ||
+        (error?.data?.errors && Object.values(error.data.errors || {})[0]?.[0]) ||
         null;
 
-      setEditBreedError(
-        apiMessage || "Failed to update breed. Please try again."
-      );
+      setEditBreedError(apiMessage || "Failed to update breed. Please try again.");
     }
   };
 
-  // فلترة بالـ memo
-  const filteredTypes = useMemo(
-    () => filterTypesList(types, typeSearch),
-    [types, typeSearch]
-  );
-
+  const filteredTypes = useMemo(() => filterTypesList(types, typeSearch), [types, typeSearch]);
   const filteredBreeds = useMemo(
     () => filterBreedsList(selectedType, breedSearch),
     [selectedType, breedSearch]
   );
 
-  // حالات تحميل/خطأ للـ types
   if (isTypesLoading) {
     return (
-      <div className="p-6">
+      <div className="p-6 max-w-6xl mx-auto">
         <p className="text-gray-500">Loading pet types...</p>
       </div>
     );
@@ -463,58 +429,38 @@ const PetTypesBreedsPage = () => {
 
   if (isTypesError) {
     return (
-      <div className="p-6">
+      <div className="p-6 max-w-6xl mx-auto">
         <p className="text-red-500">Failed to load pet types.</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center border border-indigo-100">
-          <Shapes className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Types &amp; Breeds Management
-          </h1>
-          <p className="text-gray-600 text-sm">
-            Organize pet categories and their detailed breeds
-          </p>
-        </div>
+    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+      {/* ✅ بدون المسار فوق العنوان */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-slate-900">Types &amp; Breeds</h1>
+        <p className="text-slate-500 text-sm">
+          Organize pet categories and their detailed breeds
+        </p>
       </div>
 
-      {/* Layout: Left types / Right breeds */}
       <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-6">
         {/* ========== LEFT: TYPES ========== */}
-        <Card className="h-full">
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
-                <Shapes className="w-4 h-4" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-semibold">
-                  Pet Types
-                </CardTitle>
-                <p className="text-xs text-gray-500">
-                  Select a category
-                </p>
-              </div>
+        <Card className="h-full border-slate-200 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 border-b border-slate-100">
+            <div>
+              <CardTitle className="text-lg font-semibold text-slate-900">Pet Types</CardTitle>
+              <p className="text-xs text-slate-500">Select a category</p>
             </div>
 
-            {/* Dialog Add Type */}
-            <Dialog
-              open={isTypeDialogOpen}
-              onOpenChange={setIsTypeDialogOpen}
-            >
+            <Dialog open={isTypeDialogOpen} onOpenChange={setIsTypeDialogOpen}>
               <DialogTrigger asChild>
                 <Button
                   size="icon"
                   className="rounded-full bg-indigo-600 hover:bg-indigo-700"
                   disabled={isCreatingType}
+                  title="Add type"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -527,9 +473,7 @@ const PetTypesBreedsPage = () => {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="type-name-en">
-                      Type Name (English)
-                    </Label>
+                    <Label htmlFor="type-name-en">Type Name (English)</Label>
                     <Input
                       id="type-name-en"
                       value={typeNameEn}
@@ -540,9 +484,7 @@ const PetTypesBreedsPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="type-name-ar">
-                      Type Name (Arabic)
-                    </Label>
+                    <Label htmlFor="type-name-ar">Type Name (Arabic)</Label>
                     <Input
                       id="type-name-ar"
                       dir="rtl"
@@ -553,9 +495,7 @@ const PetTypesBreedsPage = () => {
                     />
                   </div>
 
-                  {typeError && (
-                    <p className="text-xs text-red-500">{typeError}</p>
-                  )}
+                  {typeError && <p className="text-xs text-red-500">{typeError}</p>}
                 </div>
 
                 <DialogFooter>
@@ -582,8 +522,7 @@ const PetTypesBreedsPage = () => {
             </Dialog>
           </CardHeader>
 
-          <CardContent className="space-y-4">
-            {/* Search types */}
+          <CardContent className="space-y-4 pt-4">
             <div className="space-y-1">
               <Label>Search Types</Label>
               <Input
@@ -593,18 +532,15 @@ const PetTypesBreedsPage = () => {
               />
             </div>
 
-            {/* Types list */}
             <div className="space-y-3 max-h-[480px] overflow-auto pr-1">
               {filteredTypes.length === 0 && (
-                <p className="text-sm text-gray-500">
-                  No types found.
-                </p>
+                <p className="text-sm text-gray-500">No types found.</p>
               )}
 
               {filteredTypes.map((type) => {
-                const isSelected =
-                  selectedType && type.type_id === selectedType.type_id;
+                const isSelected = selectedType && type.type_id === selectedType.type_id;
                 const count = getBreedsCountForType(types, type.type_id);
+                const displayName = type.name_en || type.name || "-";
 
                 return (
                   <div
@@ -614,61 +550,46 @@ const PetTypesBreedsPage = () => {
                       "flex items-center justify-between rounded-2xl border p-3 cursor-pointer transition shadow-sm",
                       isSelected
                         ? "border-indigo-500 bg-indigo-50"
-                        : "border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40",
+                        : "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40",
                     ].join(" ")}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-xl bg-indigo-50 text-indigo-700 p-2 flex items-center justify-center">
-                        <Shapes className="w-5 h-5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">
-                          {type.name_en || type.name}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <TypeAvatar name={displayName} />
+
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-medium text-slate-900 truncate">
+                          {displayName}
                         </span>
-                        {type.name_ar && (
-                          <span
-                            className="text-xs text-gray-500"
-                            dir="rtl"
-                          >
-                            {type.name_ar}
-                          </span>
-                        )}
-                        <span className="text-[11px] text-gray-400 mt-0.5">
+                        <span className="text-[11px] text-slate-500 mt-0.5">
                           {count} breeds
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {isSelected && (
-                        <CheckCircle2 className="w-5 h-5 text-indigo-500" />
-                      )}
-
-                      {/* Edit type */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-500 hover:bg-gray-50"
+                        className="text-slate-600 hover:bg-white/60"
                         onClick={(e) => {
                           e.stopPropagation();
                           openEditTypeDialog(type);
                         }}
+                        title="Edit type"
                       >
                         <Pencil className="w-4 h-4" />
                       </Button>
 
-                      {/* Delete type */}
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-red-500 hover:bg-red-50"
+                        className="text-red-600 hover:bg-red-50"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!isDeletingType) {
-                            handleDeleteType(type);
-                          }
+                          if (!isDeletingType) handleDeleteType(type);
                         }}
                         disabled={isDeletingType}
+                        title="Delete type"
                       >
                         <Trash2 className="w-5 h-5" />
                       </Button>
@@ -683,33 +604,25 @@ const PetTypesBreedsPage = () => {
         {/* ========== RIGHT: BREEDS ========== */}
         <div className="space-y-4">
           {!selectedType ? (
-            <Card className="h-full flex items-center justify-center">
+            <Card className="h-full flex items-center justify-center border-slate-200 shadow-sm">
               <CardContent>
-                <p className="text-gray-500">
+                <p className="text-slate-500">
                   Select a pet type on the left to view its breeds.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <>
-              {/* Header bar for breeds */}
-              <Dialog
-                open={isBreedDialogOpen}
-                onOpenChange={setIsBreedDialogOpen}
-              >
-                <div className="rounded-2xl bg-white border border-gray-200 text-gray-900 p-4 md:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl bg-amber-50 text-amber-700 p-3 flex items-center justify-center">
-                      <Sparkles className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-0.5">
-                      <h2 className="text-xl font-semibold">
-                        {selectedType.name_en || selectedType.name} Breeds
-                      </h2>
-                      <p className="text-xs md:text-sm text-gray-500">
-                        {filteredBreeds.length} breeds available
-                      </p>
-                    </div>
+              <Dialog open={isBreedDialogOpen} onOpenChange={setIsBreedDialogOpen}>
+                <div className="rounded-2xl bg-white border border-slate-200 p-4 md:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
+                  <div className="min-w-0 space-y-1">
+                    {/* ✅ شلنا “مسار” فوق العنوان هون كمان */}
+                    <h2 className="text-xl font-semibold text-slate-900 truncate">
+                      {selectedTypeName} Breeds
+                    </h2>
+                    <p className="text-xs md:text-sm text-slate-500">
+                      {filteredBreeds.length} breeds available
+                    </p>
                   </div>
 
                   <DialogTrigger asChild>
@@ -723,22 +636,17 @@ const PetTypesBreedsPage = () => {
                   </DialogTrigger>
                 </div>
 
-                {/* Dialog Add Breed */}
                 <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>
                       Add Breed to{" "}
-                      <span className="text-indigo-600">
-                        {selectedType.name_en || selectedType.name}
-                      </span>
+                      <span className="text-indigo-600">{selectedTypeName}</span>
                     </DialogTitle>
                   </DialogHeader>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="breed-name-en">
-                        Breed Name (English)
-                      </Label>
+                      <Label htmlFor="breed-name-en">Breed Name (English)</Label>
                       <Input
                         id="breed-name-en"
                         value={breedNameEn}
@@ -749,9 +657,7 @@ const PetTypesBreedsPage = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="breed-name-ar">
-                        Breed Name (Arabic)
-                      </Label>
+                      <Label htmlFor="breed-name-ar">Breed Name (Arabic)</Label>
                       <Input
                         id="breed-name-ar"
                         dir="rtl"
@@ -762,11 +668,7 @@ const PetTypesBreedsPage = () => {
                       />
                     </div>
 
-                    {breedError && (
-                      <p className="text-xs text-red-500">
-                        {breedError}
-                      </p>
-                    )}
+                    {breedError && <p className="text-xs text-red-500">{breedError}</p>}
                   </div>
 
                   <DialogFooter>
@@ -792,7 +694,6 @@ const PetTypesBreedsPage = () => {
                 </DialogContent>
               </Dialog>
 
-              {/* Search breeds */}
               <div className="space-y-1">
                 <Label>Search breeds</Label>
                 <Input
@@ -802,66 +703,61 @@ const PetTypesBreedsPage = () => {
                 />
               </div>
 
-              {/* Breeds list */}
               {filteredBreeds.length === 0 ? (
-                <Card>
-                  <CardContent className="py-8 text-center text-gray-500">
+                <Card className="border-slate-200 shadow-sm">
+                  <CardContent className="py-8 text-center text-slate-500">
                     No breeds found for this type.
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredBreeds.map((breed) => (
-                    <Card
-                      key={breed.breed_id}
-                      className="flex items-center justify-between px-4 py-3 shadow-sm border border-gray-200"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-xl bg-indigo-50 text-indigo-700 p-2 flex items-center justify-center">
-                          <GitBranch className="w-5 h-5" />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="font-medium text-gray-900">
-                            {breed.name_en || breed.name}
-                          </div>
-                          {breed.name_ar && (
-                            <div
-                              className="text-xs text-gray-500"
-                              dir="rtl"
-                            >
-                              {breed.name_ar}
+                  {filteredBreeds.map((breed, idx) => {
+                    const displayBreed = breed.name_en || breed.name || "-";
+
+                    return (
+                      <Card
+                        key={breed.breed_id}
+                        className="flex items-center justify-between px-4 py-3 shadow-sm border border-slate-200"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <BreedIndexBadge n={idx + 1} />
+
+                          <div className="space-y-1 min-w-0">
+                            <div className="font-medium text-slate-900 truncate">
+                              {displayBreed}
                             </div>
-                          )}
-                          <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium text-gray-600 bg-gray-50">
-                            {selectedType.name_en || selectedType.name}
-                          </span>
+
+                            <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium text-slate-600 bg-slate-50 border-slate-200">
+                              {selectedTypeName}
+                            </span>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-1">
-                        {/* Edit breed */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-gray-500 hover:bg-gray-50"
-                          onClick={() => openEditBreedDialog(breed)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-slate-600 hover:bg-slate-50"
+                            onClick={() => openEditBreedDialog(breed)}
+                            title="Edit breed"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
 
-                        {/* Delete breed */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-500 hover:bg-red-50"
-                          onClick={() => handleDeleteBreed(breed)}
-                          disabled={isDeletingBreed}
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-600 hover:bg-red-50"
+                            onClick={() => handleDeleteBreed(breed)}
+                            disabled={isDeletingBreed}
+                            title="Delete breed"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -891,9 +787,7 @@ const PetTypesBreedsPage = () => {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-type-name-en">
-                Type Name (English)
-              </Label>
+              <Label htmlFor="edit-type-name-en">Type Name (English)</Label>
               <Input
                 id="edit-type-name-en"
                 value={editTypeNameEn}
@@ -904,9 +798,7 @@ const PetTypesBreedsPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-type-name-ar">
-                Type Name (Arabic)
-              </Label>
+              <Label htmlFor="edit-type-name-ar">Type Name (Arabic)</Label>
               <Input
                 id="edit-type-name-ar"
                 dir="rtl"
@@ -917,9 +809,7 @@ const PetTypesBreedsPage = () => {
               />
             </div>
 
-            {editTypeError && (
-              <p className="text-xs text-red-500">{editTypeError}</p>
-            )}
+            {editTypeError && <p className="text-xs text-red-500">{editTypeError}</p>}
           </div>
 
           <DialogFooter>
@@ -968,9 +858,7 @@ const PetTypesBreedsPage = () => {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-breed-name-en">
-                Breed Name (English)
-              </Label>
+              <Label htmlFor="edit-breed-name-en">Breed Name (English)</Label>
               <Input
                 id="edit-breed-name-en"
                 value={editBreedNameEn}
@@ -981,9 +869,7 @@ const PetTypesBreedsPage = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-breed-name-ar">
-                Breed Name (Arabic)
-              </Label>
+              <Label htmlFor="edit-breed-name-ar">Breed Name (Arabic)</Label>
               <Input
                 id="edit-breed-name-ar"
                 dir="rtl"
@@ -994,9 +880,7 @@ const PetTypesBreedsPage = () => {
               />
             </div>
 
-            {editBreedError && (
-              <p className="text-xs text-red-500">{editBreedError}</p>
-            )}
+            {editBreedError && <p className="text-xs text-red-500">{editBreedError}</p>}
           </div>
 
           <DialogFooter>
@@ -1023,25 +907,18 @@ const PetTypesBreedsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ✅ Delete dialog مشترك للـ type والـ breed */}
+      {/* Delete dialog */}
       <ConfirmDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={(open) => {
-          if (!open && !isDeleting) {
-            closeDeleteDialog();
-          } else {
-            setIsDeleteDialogOpen(open);
-          }
+          if (!open && !isDeleting) closeDeleteDialog();
+          else setIsDeleteDialogOpen(open);
         }}
         entityLabel={deleteMode === "type" ? "type" : "breed"}
-        name={
-          deleteTarget?.name_en ||
-          deleteTarget?.name ||
-          deleteTarget?.name_ar
-        }
+        name={deleteTarget?.name_en || deleteTarget?.name || deleteTarget?.name_ar}
         description={
           deleteMode === "type"
-            ? "This action cannot be undone. This will permanently delete the type from the system."
+            ? "This action cannot be undone. This will permanently delete the type and all breeds under it."
             : "This action cannot be undone. This will permanently delete the breed from the system."
         }
         isLoading={isDeleting}

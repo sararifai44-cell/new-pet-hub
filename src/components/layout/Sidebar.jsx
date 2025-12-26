@@ -1,30 +1,37 @@
-import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import classNames from 'classnames'
-import { HiOutlineLogout } from 'react-icons/hi'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import classNames from "classnames";
+import { HiOutlineLogout } from "react-icons/hi";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   DASHBOARD_SIDEBAR_LINKS,
   DASHBOARD_SIDEBAR_BOTTOM_LINKS,
-} from '../../lib/constants.jsx'
+} from "../../lib/constants.jsx";
 
 const baseLinkClasses =
-  'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-5 transition-colors hover:no-underline'
+  "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-5 transition-colors hover:no-underline";
+
+const isPathActive = (pathname, path) => {
+  if (!path) return false;
+  // dashboard لازم يكون exact
+  if (path === "/dashboard") return pathname === "/dashboard";
+  // باقي الصفحات: active لو نفس المسار أو ضمنه (details)
+  return pathname === path || pathname.startsWith(path + "/");
+};
 
 export default function Sidebar() {
-  const location = useLocation()
-  const { pathname } = location
+  const { pathname } = useLocation();
 
   const [openGroupKey, setOpenGroupKey] = useState(() => {
     const activeGroup = DASHBOARD_SIDEBAR_LINKS.find((link) =>
-      link.children?.some((child) => pathname === child.path)
-    )
-    return activeGroup?.key ?? null
-  })
+      link.children?.some((child) => isPathActive(pathname, child.path))
+    );
+    return activeGroup?.key ?? null;
+  });
 
   const toggleGroup = (key) => {
-    setOpenGroupKey((prev) => (prev === key ? null : key))
-  }
+    setOpenGroupKey((prev) => (prev === key ? null : key));
+  };
 
   return (
     <div className="bg-neutral-950 border-r border-neutral-800 w-60 p-3 flex flex-col text-white">
@@ -61,7 +68,7 @@ export default function Sidebar() {
           type="button"
           className={classNames(
             baseLinkClasses,
-            'text-red-400 hover:bg-red-950/30 hover:text-red-300 mt-1'
+            "text-red-400 hover:bg-red-950/30 hover:text-red-300 mt-1"
           )}
         >
           <span className="text-lg">
@@ -71,12 +78,15 @@ export default function Sidebar() {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function SidebarGroup({ link, isOpen, onToggle }) {
-  const { pathname } = useLocation()
-  const isGroupActive = link.children?.some((child) => pathname === child.path)
+  const { pathname } = useLocation();
+
+  const isGroupActive = link.children?.some((child) =>
+    isPathActive(pathname, child.path)
+  );
 
   return (
     <div className="mb-0.5">
@@ -85,10 +95,10 @@ function SidebarGroup({ link, isOpen, onToggle }) {
         onClick={onToggle}
         className={classNames(
           baseLinkClasses,
-          'w-full justify-between',
+          "w-full justify-between",
           isGroupActive
-            ? 'bg-neutral-800 text-white'
-            : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100'
+            ? "bg-neutral-800 text-white"
+            : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
         )}
       >
         <span className="flex items-center gap-2">
@@ -115,12 +125,12 @@ function SidebarGroup({ link, isOpen, onToggle }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function SidebarLink({ link, isChild = false }) {
-  const { pathname } = useLocation()
-  const isActive = pathname === link.path
+  const { pathname } = useLocation();
+  const isActive = isPathActive(pathname, link.path);
 
   return (
     <Link
@@ -128,9 +138,9 @@ function SidebarLink({ link, isChild = false }) {
       className={classNames(
         baseLinkClasses,
         isActive
-          ? 'bg-neutral-800 text-white border-r-4 border-indigo-500 pr-2'
-          : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100',
-        isChild && 'text-[12.5px] pl-4 py-1.5'
+          ? "bg-neutral-800 text-white border-r-4 border-indigo-500 pr-2"
+          : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100",
+        isChild && "text-[12.5px] pl-4 py-1.5"
       )}
     >
       {link.icon && !isChild && (
@@ -140,5 +150,5 @@ function SidebarLink({ link, isChild = false }) {
       )}
       <span>{link.label}</span>
     </Link>
-  )
+  );
 }

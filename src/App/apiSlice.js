@@ -22,6 +22,6 @@ export const apiSlice = createApi({
     },
   }),
 
-  tagTypes: ["Pet", "Pets", "PetType", "PetBreed"],
+  tagTypes: ["Pet", "Pets", "PetType", "PetBreed", "AdoptionApplication"],
   endpoints: () => ({}),
 });

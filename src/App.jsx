@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -13,6 +12,9 @@ import EditPetPage from "./pages/dashboard/pet-management/EditPetPage.jsx";
 import PetTypesBreedsPage from "./pages/dashboard/pet-management/PetTypesBreedsPage.jsx";
 import PetDetailsPage from "./pages/dashboard/pet-management/PetDetailsPage.jsx";
 
+// ✅ NEW: Pet Applications page
+import PetAdoptionApplicationsPage from "./pages/dashboard/pet-management/PetAdoptionApplicationsPage.jsx";
+
 // Store management
 import ProductCategoriesPage from "./pages/dashboard/store-management/ProductCategoriesPage.jsx";
 import ProductListPage from "./pages/dashboard/store-management/ProductListPage.jsx";
@@ -20,9 +22,13 @@ import AddProductPage from "./pages/dashboard/store-management/AddProductPage.js
 import EditProductPage from "./pages/dashboard/store-management/EditProductPage.jsx";
 import ProductDetailsPage from "./pages/dashboard/store-management/ProductDetailsPage.jsx";
 
-// ✅ Orders (بدل Cart)
+// Orders
 import OrdersListPage from "./pages/dashboard/store-management/OrdersListPage.jsx";
 import OrderDetailsPage from "./pages/dashboard/store-management/OrderDetailsPage.jsx";
+
+// Adoption Center
+import AdoptionApplicationsListPage from "./pages/dashboard/adoption-center/AdoptionApplicationsListPage.jsx";
+import AdoptionApplicationDetailsPage from "./pages/dashboard/adoption-center/AdoptionApplicationDetailsPage.jsx";
 
 function App() {
   return (
@@ -33,9 +39,8 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Dashboard Layout */}
+          {/* Dashboard */}
           <Route path="/dashboard" element={<DashboardLayout />}>
-            {/* Home */}
             <Route index element={<Dashboard />} />
 
             {/* Pet Management */}
@@ -43,19 +48,29 @@ function App() {
             <Route path="pet-management/add" element={<AddPetPage />} />
             <Route path="pet-management/edit/:id" element={<EditPetPage />} />
             <Route path="pet-management/catalog" element={<PetTypesBreedsPage />} />
+
+            {/* ✅ NEW: applications for a specific pet */}
+            <Route
+              path="pet-management/:id/applications"
+              element={<PetAdoptionApplicationsPage />}
+            />
+
             <Route path="pet-management/:id" element={<PetDetailsPage />} />
 
             {/* Store Management */}
             <Route path="store-management/categories" element={<ProductCategoriesPage />} />
-
             <Route path="store-management/products" element={<ProductListPage />} />
             <Route path="store-management/products/add" element={<AddProductPage />} />
             <Route path="store-management/products/edit/:id" element={<EditProductPage />} />
             <Route path="store-management/products/:id" element={<ProductDetailsPage />} />
 
-            {/* ✅ Orders */}
+            {/* Orders */}
             <Route path="store-management/orders" element={<OrdersListPage />} />
             <Route path="store-management/orders/:id" element={<OrderDetailsPage />} />
+
+            {/* Adoption Center */}
+            <Route path="adoption-center" element={<AdoptionApplicationsListPage />} />
+            <Route path="adoption-center/:id" element={<AdoptionApplicationDetailsPage />} />
 
             {/* Not Found داخل الداشبورد */}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -66,7 +81,6 @@ function App() {
         </Routes>
       </Router>
 
-      {/* ✅ لازم يكون خارج Routes */}
       <Toaster position="top-right" richColors />
     </>
   );

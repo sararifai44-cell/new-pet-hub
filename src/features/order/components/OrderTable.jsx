@@ -40,6 +40,11 @@ export default function OrderTable({ orders, onView, onCancel, isCancelling }) {
     return <p className="text-center text-slate-500 py-10">No orders found.</p>;
   }
 
+  const stop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full text-sm">
@@ -65,13 +70,28 @@ export default function OrderTable({ orders, onView, onCancel, isCancelling }) {
             const userId = o?.user?.user_id ?? "-";
 
             const items = Array.isArray(o?.items) ? o.items : [];
-            // ✅ مجموع الكميات (إذا بدك عدد السطور: بدّليها بـ items.length)
-            const itemsCount = items.reduce((sum, it) => sum + Number(it?.quantity || 0), 0);
+            const itemsCount = items.reduce(
+              (sum, it) => sum + Number(it?.quantity || 0),
+              0
+            );
+
+            const goDetails = () => onView?.(o);
 
             return (
-              <tr key={o.id} className="border-b border-slate-100 hover:bg-slate-50/60">
+              <tr
+                key={o.id}
+                onClick={goDetails}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") goDetails();
+                }}
+                className="border-b border-slate-100 hover:bg-slate-50/60 cursor-pointer transition-colors"
+              >
+                {/* ID */}
                 <td className="p-3 font-medium text-slate-900">#{o.id}</td>
 
+                {/* Customer */}
                 <td className="p-3 text-slate-700">
                   <div className="flex flex-col">
                     <span className="font-medium">{customerName}</span>
@@ -79,31 +99,54 @@ export default function OrderTable({ orders, onView, onCancel, isCancelling }) {
                   </div>
                 </td>
 
+                {/* Items */}
                 <td className="p-3 text-slate-700">
                   <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-full border border-slate-200 bg-slate-50 text-slate-700">
                     {itemsCount} item{itemsCount === 1 ? "" : "s"}
                   </span>
                 </td>
 
+                {/* Total */}
                 <td className="p-3 text-slate-700">{formatMoney(o.total)}</td>
 
+                {/* Status */}
                 <td className="p-3">
-                  <span className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full border ${statusBadge(o.status)}`}>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full border ${statusBadge(
+                      o.status
+                    )}`}
+                  >
                     {pretty(o.status)}
                   </span>
                 </td>
 
+                {/* Payment */}
                 <td className="p-3">
-                  <span className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full border ${payBadge(o.payment_status)}`}>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full border ${payBadge(
+                      o.payment_status
+                    )}`}
+                  >
                     {pretty(o.payment_status)}
                   </span>
                 </td>
 
+                {/* Created */}
                 <td className="p-3 text-slate-700">{formatDate(o.created_at)}</td>
 
-                <td className="p-3">
+                {/* Actions (بدون navigation) */}
+                <td className="p-3" onClick={stop}>
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => onView?.(o)} className="gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={(e) => {
+                        stop(e);
+                        onView?.(o);
+                      }}
+                    >
                       <Eye className="w-4 h-4" />
                       View
                     </Button>
@@ -112,10 +155,13 @@ export default function OrderTable({ orders, onView, onCancel, isCancelling }) {
                       type="button"
                       variant="destructive"
                       size="sm"
-                      onClick={() => onCancel?.(o)}
                       className="gap-2"
                       disabled={!canCancel || isCancelling}
                       title={!canCancel ? "Cannot cancel this order" : "Cancel order"}
+                      onClick={(e) => {
+                        stop(e);
+                        onCancel?.(o);
+                      }}
                     >
                       <Ban className="w-4 h-4" />
                       Cancel

@@ -53,6 +53,9 @@ const PetForm = ({
     defaultValues,
   });
 
+  // ✅ adoptable controlled value
+  const isAdoptable = watch("is_adoptable");
+
   // صور DB
   const [existingImages, setExistingImages] = useState(
     normalizeExistingImages(initialData || {})
@@ -173,7 +176,8 @@ const PetForm = ({
     }
     // else: do not append description
 
-    fd.append("is_adoptable", data.is_adoptable ? "1" : "0");
+    // ✅ IMPORTANT: use controlled value to avoid RHF checkbox quirks on Add
+    fd.append("is_adoptable", isAdoptable ? "1" : "0");
 
     newImages.forEach(({ file }) => {
       if (file) fd.append("images[]", file);
@@ -236,7 +240,9 @@ const PetForm = ({
               errors.breed_id ? "border-red-300 bg-red-50" : "border-gray-300"
             } ${!typeId ? "bg-gray-50 text-gray-400" : ""}`}
           >
-            <option value="">{typeId ? "Select Breed" : "Select type first"}</option>
+            <option value="">
+              {typeId ? "Select Breed" : "Select type first"}
+            </option>
             {filteredBreeds.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -290,9 +296,13 @@ const PetForm = ({
             </div>
           </div>
           {errors.date_of_birth && (
-            <p className="text-red-500 text-xs">{errors.date_of_birth.message}</p>
+            <p className="text-red-500 text-xs">
+              {errors.date_of_birth.message}
+            </p>
           )}
-          <p className="text-xs text-gray-500">Use Gregorian calendar (YYYY-MM-DD)</p>
+          <p className="text-xs text-gray-500">
+            Use Gregorian calendar (YYYY-MM-DD)
+          </p>
         </div>
       </div>
 
@@ -380,19 +390,22 @@ const PetForm = ({
         {errors.description && (
           <p className="text-red-500 text-xs">{errors.description.message}</p>
         )}
-        <p className="text-xs text-gray-500">
-          Optional (if left empty it will be saved as null)
-        </p>
       </div>
 
-      {/* Adoptable */}
+      {/* ✅ Adoptable (controlled) */}
       {showAdoptionOption && (
         <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <input
             type="checkbox"
-            {...register("is_adoptable")}
-            className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500 border-gray-300"
             id="adoption-checkbox"
+            checked={!!isAdoptable}
+            onChange={(e) =>
+              setValue("is_adoptable", e.target.checked, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500 border-gray-300"
           />
           <label
             htmlFor="adoption-checkbox"

@@ -1,6 +1,6 @@
 // src/features/pet/components/PetTable.jsx
 import React from "react";
-import { Edit3, Trash2, Eye, Image as ImageIcon } from "lucide-react";
+import { Edit3, Trash2, Eye, Image as ImageIcon, ClipboardList } from "lucide-react";
 
 import {
   Table,
@@ -37,7 +37,14 @@ const calculateAge = (dateOfBirth) => {
   return years >= 0 ? years : "-";
 };
 
-const PetTable = ({ pets, onView, onEdit, onDelete, showActions = true }) => {
+const PetTable = ({
+  pets,
+  onView,
+  onEdit,
+  onDelete,
+  onApplications,
+  showActions = true,
+}) => {
   if (!pets || pets.length === 0) {
     return (
       <div className="text-center py-8 text-sm text-gray-500 border border-dashed border-gray-200 rounded-lg">
@@ -45,6 +52,11 @@ const PetTable = ({ pets, onView, onEdit, onDelete, showActions = true }) => {
       </div>
     );
   }
+
+  const stop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
@@ -60,6 +72,7 @@ const PetTable = ({ pets, onView, onEdit, onDelete, showActions = true }) => {
             <TableHead className="text-xs font-semibold text-gray-600 uppercase">
               Status
             </TableHead>
+
             {showActions && (
               <TableHead className="text-xs font-semibold text-gray-600 uppercase">
                 Actions
@@ -78,14 +91,22 @@ const PetTable = ({ pets, onView, onEdit, onDelete, showActions = true }) => {
               pet?.breed?.type?.name ??
               "-";
 
-            const breedName =
-              pet?.pet_breed?.name ?? pet?.breed?.name ?? "-";
+            const breedName = pet?.pet_breed?.name ?? pet?.breed?.name ?? "-";
+
+            const goDetails = () => onView?.(pet);
 
             return (
               <TableRow
                 key={pet?.id}
-                className="hover:bg-gray-50 transition-colors"
+                onClick={goDetails}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") goDetails();
+                }}
+                className="hover:bg-gray-50 transition-colors cursor-pointer"
               >
+                {/* ✅ Pet (الصورة + الاسم كبسة بتودّي للتفاصيل) */}
                 <TableCell>
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
@@ -94,6 +115,7 @@ const PetTable = ({ pets, onView, onEdit, onDelete, showActions = true }) => {
                           src={imgUrl}
                           alt={pet?.name || "pet"}
                           className="h-full w-full object-cover"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="h-full w-full grid place-items-center text-gray-400">
@@ -114,13 +136,13 @@ const PetTable = ({ pets, onView, onEdit, onDelete, showActions = true }) => {
                   </div>
                 </TableCell>
 
+                {/* ✅ Type & Breed (كمان كبسة تودّي للتفاصيل) */}
                 <TableCell>
-                  <div className="text-sm font-medium text-gray-900">
-                    {typeName}
-                  </div>
+                  <div className="text-sm font-medium text-gray-900">{typeName}</div>
                   <div className="text-xs text-gray-500">{breedName}</div>
                 </TableCell>
 
+                {/* ✅ Status (كمان كبسة تودّي للتفاصيل) */}
                 <TableCell>
                   <Badge
                     variant="outline"
@@ -135,33 +157,59 @@ const PetTable = ({ pets, onView, onEdit, onDelete, showActions = true }) => {
                 </TableCell>
 
                 {showActions && (
-                  <TableCell>
+                  <TableCell onClick={stop}>
+                    {/* ✅ خلية الأكشن نفسها ما تعمل navigate */}
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => onView?.(pet)}
+                        onClick={(e) => {
+                          stop(e);
+                          onView?.(pet);
+                        }}
                         className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
+
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => onEdit?.(pet)}
+                        onClick={(e) => {
+                          stop(e);
+                          onApplications?.(pet);
+                        }}
+                        className="text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+                        title="Adoption Applications"
+                      >
+                        <ClipboardList className="w-4 h-4" />
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          stop(e);
+                          onEdit?.(pet);
+                        }}
                         className="text-green-600 hover:text-green-700 hover:bg-green-50"
                         title="Edit Pet"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
+
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDelete?.(pet)}
+                        onClick={(e) => {
+                          stop(e);
+                          onDelete?.(pet);
+                        }}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         title="Delete Pet"
                       >

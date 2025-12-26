@@ -3,40 +3,36 @@ import { apiSlice } from "../../App/apiSlice";
 
 export const productApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // GET /api/admin/products?page=1
     getProducts: builder.query({
-      query: (page = 1) => `/admin/products?page=${page}`,
-      providesTags: (result) =>
-        result?.data
-          ? [
-              { type: "Product", id: "LIST" },
-              ...result.data.map((p) => ({ type: "Product", id: p.id })),
-            ]
-          : [{ type: "Product", id: "LIST" }],
+      query: () => "admin/products",
+      providesTags: (result) => {
+        const list = result?.data ?? [];
+        return [
+          { type: "Product", id: "LIST" },
+          ...list.map((p) => ({ type: "Product", id: p.id })),
+        ];
+      },
     }),
 
-    // ✅ GET /api/admin/products/:id (show)
     getProduct: builder.query({
-      query: (id) => `/admin/products/${id}`,
+      query: (id) => `admin/products/${id}`,
       providesTags: (result, error, id) => [{ type: "Product", id }],
     }),
 
-    // POST /api/admin/products
     createProduct: builder.mutation({
-      query: (data) => ({
-        url: "/admin/products",
+      query: (formData) => ({
+        url: "admin/products",
         method: "POST",
-        body: data,
+        body: formData, // ✅ FormData
       }),
       invalidatesTags: [{ type: "Product", id: "LIST" }],
     }),
 
-    // PATCH /api/admin/products/:id (partial update)
     updateProduct: builder.mutation({
-      query: ({ id, ...data }) => ({
-        url: `/admin/products/${id}`,
-        method: "PATCH",
-        body: data,
+      query: ({ id, formData }) => ({
+        url: `admin/products/${id}`,
+        method: "POST",
+        body: formData, // ✅ FormData فيه _method=PATCH
       }),
       invalidatesTags: (result, error, { id }) => [
         { type: "Product", id },
@@ -44,10 +40,9 @@ export const productApiSlice = apiSlice.injectEndpoints({
       ],
     }),
 
-    // DELETE /api/admin/products/:id
     deleteProduct: builder.mutation({
       query: (id) => ({
-        url: `/admin/products/${id}`,
+        url: `admin/products/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: (result, error, id) => [
@@ -61,7 +56,7 @@ export const productApiSlice = apiSlice.injectEndpoints({
 
 export const {
   useGetProductsQuery,
-  useGetProductQuery, // ✅
+  useGetProductQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,

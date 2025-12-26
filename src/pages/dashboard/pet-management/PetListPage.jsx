@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, PawPrint, Heart, XCircle, Layers } from "lucide-react";
+import { toast } from "sonner";
 
 import PetFilters from "../../../features/pet/components/PetFilters";
 import PetTable from "../../../features/pet/components/PetTable";
@@ -38,19 +39,25 @@ export default function PetListPage() {
   const [petToDelete, setPetToDelete] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const pets = petsRes?.data ?? [];
+  const pets = useMemo(() => {
+    const list = petsRes?.data ?? [];
+    return Array.isArray(list) ? list : [];
+  }, [petsRes]);
 
   // ✅ petTypes + breeds من endpoint التايبس
   const { petTypes, breeds } = useMemo(() => {
     const raw = typesRes?.data ?? [];
-    const petTypes = raw.map((t) => ({ type_id: t.id, name: t.name }));
-    const breeds = raw.flatMap((t) =>
+    const typesArr = Array.isArray(raw) ? raw : [];
+
+    const petTypes = typesArr.map((t) => ({ type_id: t.id, name: t.name }));
+    const breeds = typesArr.flatMap((t) =>
       (t.breeds || []).map((b) => ({
         breed_id: b.id,
         name: b.name,
         type_id: t.id,
       }))
     );
+
     return { petTypes, breeds };
   }, [typesRes]);
 
@@ -79,7 +86,7 @@ export default function PetListPage() {
       const matchesBreed = !breedId || Number(pet?.pet_breed?.id) === breedId;
 
       const petGender = normalize(pet?.gender);
-      const matchesGender = !gender || petGender === normalize(gender);
+      const matchesGender = !gender || petGender === gender;
 
       const matchesStatus =
         !status ||
@@ -92,7 +99,10 @@ export default function PetListPage() {
 
   // Stats
   const totalPets = pets.length;
-  const availablePets = useMemo(() => pets.filter((p) => !!p?.is_adoptable).length, [pets]);
+  const availablePets = useMemo(
+    () => pets.filter((p) => !!p?.is_adoptable).length,
+    [pets]
+  );
   const notAvailablePets = totalPets - availablePets;
   const petTypesCount = petTypes.length;
 
@@ -102,6 +112,10 @@ export default function PetListPage() {
   // Routes حسب App.jsx
   const onView = (pet) => navigate(`/dashboard/pet-management/${pet.id}`);
   const onEdit = (pet) => navigate(`/dashboard/pet-management/edit/${pet.id}`);
+
+  // ✅ NEW: Pet applications route
+  const onApplications = (pet) =>
+    navigate(`/dashboard/pet-management/${pet.id}/applications`);
 
   // ✅ بدل window.confirm: افتح الدايالوغ
   const onDelete = (pet) => {
@@ -115,9 +129,10 @@ export default function PetListPage() {
 
     try {
       await deletePet(petToDelete.id).unwrap();
+      toast.success("Pet deleted successfully.");
     } catch (e) {
       console.error(e);
-      alert("Delete failed");
+      toast.error("Delete failed.");
     } finally {
       setIsDeleteDialogOpen(false);
       setPetToDelete(null);
@@ -253,7 +268,8 @@ export default function PetListPage() {
             pets={filteredPets}
             onView={onView}
             onEdit={onEdit}
-            onDelete={onDelete}   // ✅ هاد بيفتح الدايالوغ
+            onDelete={onDelete} // ✅ يفتح Dialog
+            onApplications={onApplications} // ✅ NEW: يروح على Pet Applications
             showActions
           />
         </CardContent>
@@ -263,7 +279,6 @@ export default function PetListPage() {
       <ConfirmDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={(open) => {
-          // إذا عم يحذف لا تسكّر
           if (!open && isDeleting) return;
           setIsDeleteDialogOpen(open);
           if (!open) setPetToDelete(null);
@@ -272,7 +287,6 @@ export default function PetListPage() {
         name={petToDelete?.name}
         isLoading={isDeleting}
         onConfirm={confirmDelete}
-        // (اختياري) نصوص
         actionVerb="Delete"
         confirmText="Delete"
         loadingText="Deleting..."

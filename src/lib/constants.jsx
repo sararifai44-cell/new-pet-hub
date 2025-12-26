@@ -47,7 +47,7 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     ],
   },
 
-  // 💛 مركز التبني
+  // 💛 مركز التبني (✅ Link مباشر)
   {
     key: "adoption-center",
     label: "Adoption Center",
@@ -79,7 +79,7 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     icon: <HiOutlineClipboardList />,
   },
 
-  // 🛒 المتجر — صار Group فيه دروب داون
+  // 🛒 المتجر — Group
   {
     key: "store-management",
     label: "Store Management",
@@ -97,7 +97,7 @@ export const DASHBOARD_SIDEBAR_LINKS = [
       },
       {
         key: "orders",
-        label: "orders",
+        label: "Orders",
         path: "/dashboard/store-management/orders",
       },
     ],
