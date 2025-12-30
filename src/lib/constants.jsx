@@ -55,15 +55,26 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     icon: <HiOutlineHeart />,
   },
 
-  // 🏠 إقامة / Boarding
+  // ✅ Boarding — صار Group وفيه الحجوزات + الخدمات
   {
     key: "boarding-management",
     label: "Boarding Management",
-    path: "/dashboard/boarding-management",
     icon: <HiOutlineHome />,
+    children: [
+      {
+        key: "temporary-bookings",
+        label: "Temporary Bookings",
+        path: "/dashboard/boarding-management/bookings",
+      },
+      {
+        key: "boarding-services",
+        label: "Services",
+        path: "/dashboard/boarding-management/services",
+      },
+    ],
   },
 
-  // 📅 مواعيد
+  // 📅 مواعيد (خلّيناها متل ما هي هلأ)
   {
     key: "appointments-management",
     label: "Appointments Management",

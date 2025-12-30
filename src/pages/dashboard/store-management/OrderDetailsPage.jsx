@@ -30,16 +30,35 @@ function pretty(v) {
   return String(v ?? "-").replaceAll("_", " ");
 }
 
+/**
+ * ✅ صار يقرأ cover_image حسب الريسبونس:
+ * item.product.cover_image
+ */
 function getProductImage(product) {
   const raw =
+    product?.cover_image ||
     product?.image_url ||
     product?.image ||
     product?.thumbnail ||
     (Array.isArray(product?.images) ? product.images[0] : null);
 
   if (!raw) return null;
+
+  // string URL
   if (typeof raw === "string") return raw;
-  return raw?.url || raw?.path || null;
+
+  // object {url/path/original_url/...}
+  if (typeof raw === "object") {
+    return (
+      raw?.url ||
+      raw?.path ||
+      raw?.original_url ||
+      raw?.secure_url ||
+      null
+    );
+  }
+
+  return null;
 }
 
 const OrderDetailsPage = () => {
@@ -52,7 +71,10 @@ const OrderDetailsPage = () => {
   const [cancelOrder, { isLoading: isCancelling }] = useCancelOrderMutation();
 
   const order = useMemo(() => data?.data ?? data ?? null, [data]);
-  const items = useMemo(() => (Array.isArray(order?.items) ? order.items : []), [order]);
+  const items = useMemo(
+    () => (Array.isArray(order?.items) ? order.items : []),
+    [order]
+  );
 
   const [status, setStatus] = useState("");
 
@@ -85,6 +107,13 @@ const OrderDetailsPage = () => {
     if (!isDirty) return;
 
     try {
+      // ✅ حماية إضافية: ما نرسل غير القيم اللي الباك بيفهمها
+      const allowed = ["pending", "in_progress", "completed", "cancelled"];
+      if (!allowed.includes(String(status || "").toLowerCase())) {
+        toast.error("Invalid status selected.");
+        return;
+      }
+
       await updateStatus({ id: order.id, status }).unwrap();
       toast.success("Order status updated.");
     } catch (e) {
@@ -123,7 +152,8 @@ const OrderDetailsPage = () => {
     );
   }
 
-  if (isError || !order) return <div className="p-6 text-red-500">Failed to load order.</div>;
+  if (isError || !order)
+    return <div className="p-6 text-red-500">Failed to load order.</div>;
 
   const customerName = order?.user?.user_name ?? "-";
   const userId = order?.user?.user_id ?? "-";
@@ -146,9 +176,13 @@ const OrderDetailsPage = () => {
 
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Order #{order.id}</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Order #{order.id}
+          </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Customer: <span className="font-medium text-slate-700">{customerName}</span> (User ID: {userId})
+            Customer:{" "}
+            <span className="font-medium text-slate-700">{customerName}</span>{" "}
+            (User ID: {userId})
           </p>
         </div>
 
@@ -201,9 +235,9 @@ const OrderDetailsPage = () => {
                 onChange={(e) => setStatus(e.target.value)}
                 className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-200"
               >
+                {/* ✅ مطابق تماماً للباك */}
                 <option value="pending">Pending</option>
                 <option value="in_progress">In progress</option>
-                <option value="shipped">Shipped</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -238,7 +272,9 @@ const OrderDetailsPage = () => {
 
         <CardContent className="pt-4">
           {items.length === 0 ? (
-            <p className="text-center text-slate-500 py-8">No items found for this order.</p>
+            <p className="text-center text-slate-500 py-8">
+              No items found for this order.
+            </p>
           ) : (
             <div className="w-full overflow-x-auto">
               <table className="w-full text-sm">
@@ -255,7 +291,7 @@ const OrderDetailsPage = () => {
 
                 <tbody>
                   {items.map((it) => {
-                    const p = it.product;
+                    const p = it?.product ?? null;
                     const img = getProductImage(p);
 
                     return (
@@ -279,8 +315,12 @@ const OrderDetailsPage = () => {
 
                         <td className="p-3">
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">{p?.name ?? "—"}</span>
-                            <span className="text-xs text-slate-500">Product ID: {it.product_id}</span>
+                            <span className="font-medium text-slate-900">
+                              {p?.name ?? "—"}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              Product ID: {it.product_id}
+                            </span>
                           </div>
                         </td>
 

@@ -22,7 +22,7 @@ export const petApiSlice = apiSlice.injectEndpoints({
       query: (formData) => ({
         url: "admin/pets",
         method: "POST",
-        body: formData, // FormData
+        body: formData,
       }),
       invalidatesTags: [{ type: "Pet", id: "LIST" }],
     }),
@@ -31,7 +31,7 @@ export const petApiSlice = apiSlice.injectEndpoints({
       query: ({ id, formData }) => ({
         url: `admin/pets/${id}`,
         method: "POST",
-        body: formData, // FormData فيه _method=PATCH
+        body: formData,
       }),
       invalidatesTags: (result, error, { id }) => [
         { type: "Pet", id },

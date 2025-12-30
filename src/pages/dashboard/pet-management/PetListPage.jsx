@@ -35,7 +35,6 @@ export default function PetListPage() {
 
   const [deletePet, { isLoading: isDeleting }] = useDeletePetMutation();
 
-  // ✅ Delete Dialog state
   const [petToDelete, setPetToDelete] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -44,7 +43,6 @@ export default function PetListPage() {
     return Array.isArray(list) ? list : [];
   }, [petsRes]);
 
-  // ✅ petTypes + breeds من endpoint التايبس
   const { petTypes, breeds } = useMemo(() => {
     const raw = typesRes?.data ?? [];
     const typesArr = Array.isArray(raw) ? raw : [];

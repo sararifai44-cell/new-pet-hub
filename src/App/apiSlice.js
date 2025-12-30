@@ -4,7 +4,7 @@ export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api",
-    credentials: "omit", // ✅ بدل include
+    credentials: "omit",
     prepareHeaders: (headers) => {
       headers.set("Accept", "application/json");
 
@@ -22,6 +22,14 @@ export const apiSlice = createApi({
     },
   }),
 
-  tagTypes: ["Pet", "Pets", "PetType", "PetBreed", "AdoptionApplication"],
+  tagTypes: [
+    "Pet",
+    "Pets",
+    "PetType",
+    "PetBreed",
+    "AdoptionApplication",
+    "BoardingReservation",
+    "BoardingService",
+  ],
   endpoints: () => ({}),
 });

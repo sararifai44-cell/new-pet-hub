@@ -1,10 +1,9 @@
 import { apiSlice } from "../../App/apiSlice";
 export const orderApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ جلب كل الأوردرز (بدون فلاتر من السيرفر)
     getOrders: builder.query({
       query: () => ({
-        url: "/admin/orders", // إذا بدك للمستخدم: "/my/orders"
+        url: "/admin/orders",
       }),
       providesTags: (result) => {
         const list = result?.data ?? result ?? [];
