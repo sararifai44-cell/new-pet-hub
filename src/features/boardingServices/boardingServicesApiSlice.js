@@ -5,7 +5,6 @@ const pickData = (res) =>
   res && typeof res === "object" && "data" in res ? res.data : res;
 
 const normalizeServicePayload = (payload) => {
-  // الباك بدو is_active رقم 0/1
   const out = { ...payload };
 
   if ("is_active" in out) {
@@ -16,7 +15,6 @@ const normalizeServicePayload = (payload) => {
 
 export const boardingServicesApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ GET /api/admin/boarding-services
     getBoardingServices: builder.query({
       query: () => ({
         url: "admin/boarding-services",
@@ -31,7 +29,6 @@ export const boardingServicesApiSlice = apiSlice.injectEndpoints({
       },
     }),
 
-    // ✅ POST /api/admin/boarding-services
     createBoardingService: builder.mutation({
       query: (payload) => ({
         url: "admin/boarding-services",
@@ -42,7 +39,6 @@ export const boardingServicesApiSlice = apiSlice.injectEndpoints({
       transformResponse: (res) => pickData(res),
     }),
 
-    // ✅ PATCH /api/admin/boarding-services/:id
     updateBoardingService: builder.mutation({
       query: ({ id, ...patch }) => ({
         url: `admin/boarding-services/${id}`,
@@ -56,7 +52,6 @@ export const boardingServicesApiSlice = apiSlice.injectEndpoints({
       transformResponse: (res) => pickData(res),
     }),
 
-    // ✅ DELETE /api/admin/boarding-services/:id  (إذا عندك مسار مختلف ابعته)
     deleteBoardingService: builder.mutation({
       query: (id) => ({
         url: `admin/boarding-services/${id}`,

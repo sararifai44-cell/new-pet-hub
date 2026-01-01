@@ -9,7 +9,7 @@ const toNumberOrNull = (v) => {
 };
 
 export default function BoardingServiceFormCard({
-  mode, // "create" | "edit"
+  mode, 
   initialValues,
   onSubmit,
   onCancel,

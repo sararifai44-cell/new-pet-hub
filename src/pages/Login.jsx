@@ -10,7 +10,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useLoginMutation } from "../features/auth/authApiSlice";
 
-// ✅ Schema الفاليديشن
 const loginSchema = z.object({
   email: z
     .string()
@@ -48,7 +47,6 @@ const Login = () => {
         password: data.password,
       }).unwrap();
 
-      // ✅ استخراج token بشكل مرن
       const token =
         res?.token ||
         res?.access_token ||
@@ -59,7 +57,6 @@ const Login = () => {
         throw new Error("Token not found in login response.");
       }
 
-      // remember: كوكي أطول أو Session
       if (data.remember) Cookies.set("token", token, { expires: 30 });
       else Cookies.set("token", token);
 
@@ -89,7 +86,6 @@ const Login = () => {
           <p className="text-gray-500 mt-2">Admin Sign In</p>
         </div>
 
-        {/* خطأ عام */}
         {formError && (
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 whitespace-pre-line">
             {formError}
@@ -176,12 +172,7 @@ const Login = () => {
               </label>
             </div>
 
-            <button
-              type="button"
-              className="text-md font-semibold text-black-600 hover:underline"
-            >
-              Forgot Password?
-            </button>
+         
           </div>
 
           {/* Submit */}

@@ -163,7 +163,6 @@ export default function AdoptionApplicationDetailsPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      {/* ✅ Back فوق الهيدر */}
       <div className="flex items-center">
         <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
           <ArrowLeft className="w-4 h-4" />
@@ -171,7 +170,6 @@ export default function AdoptionApplicationDetailsPage() {
         </Button>
       </div>
 
-      {/* ✅ Header card (الصورة + Delete فقط) */}
       <Card className="border-slate-200 bg-white shadow-sm">
         <CardContent className="py-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

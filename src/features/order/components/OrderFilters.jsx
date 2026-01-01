@@ -64,9 +64,7 @@ export default function OrderFilters({ filters, onFilterChange, onReset }) {
           )}
         </div>
 
-        {/* ✅ One row on large screens + narrower */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-          {/* Search (narrower than before) */}
           <div className="lg:col-span-5">
             <label className="text-xs font-medium text-slate-600">Search</label>
             <div className="relative mt-1">

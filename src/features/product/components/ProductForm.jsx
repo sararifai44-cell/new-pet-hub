@@ -48,13 +48,11 @@ export default function ProductForm({
     defaultValues,
   });
 
-  // Existing images (DB)
   const [existingImages, setExistingImages] = useState(
     normalizeExistingImages(initialData || {})
   );
 
-  // New images (uploads)
-  const [newImages, setNewImages] = useState([]); // [{file, previewUrl}]
+  const [newImages, setNewImages] = useState([]); 
 
   const clearNewImages = () => {
     setNewImages((prev) => {
@@ -67,7 +65,6 @@ export default function ProductForm({
     reset(getProductDefaultValues(initialData || {}));
     setExistingImages(normalizeExistingImages(initialData || {}));
     clearNewImages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, reset]);
 
   const totalImagesCount = existingImages.length + newImages.length;
@@ -107,7 +104,6 @@ export default function ProductForm({
     return () => {
       newImages.forEach((x) => x?.previewUrl && URL.revokeObjectURL(x.previewUrl));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFormSubmit = (data) => {
@@ -115,7 +111,6 @@ export default function ProductForm({
 
     if (isEdit) fd.append("_method", "PATCH");
 
-    // ✅ REQUIRED fields
     fd.append("pet_type_id", String(Number(data.pet_type_id)));
     fd.append("product_category_id", String(Number(data.product_category_id)));
 
@@ -124,13 +119,11 @@ export default function ProductForm({
     fd.append("price", String(Number(data.price)));
     fd.append("stock_quantity", String(Number(data.stock_quantity)));
 
-    // ✅ nullable|string: إذا فاضي ما نبعتو (ليصير null بالباك)
     const desc = (data.description ?? "").toString().trim();
     if (desc.length > 0) fd.append("description", desc);
 
     fd.append("is_active", data.is_active ? "1" : "0");
 
-    // ✅ images[]
     newImages.forEach(({ file }) => {
       if (file) fd.append("images[]", file);
     });

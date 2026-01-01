@@ -98,7 +98,6 @@ export default function ProductTable({ products = [], onView, onEdit, onDelete }
                   )}
                 </TableCell>
 
-                {/* ✅ Actions: ما تعمل navigation */}
                 <TableCell className="text-right" onClick={stop}>
                   <div className="flex justify-end gap-2">
                     <Button

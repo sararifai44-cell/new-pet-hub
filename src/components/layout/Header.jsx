@@ -8,12 +8,10 @@ export default function Header() {
 
   return (
     <div className="bg-white h-16 px-4 flex items-center border-b border-gray-200 justify-between">
-      {/* ✅ شلنا البحث بالكامل */}
       <div />
 
       {/* --- Right side --- */}
       <div className="flex items-center gap-2 mr-2 ml-auto">
-        {/* ✅ Notifications فقط */}
         <Popover className="relative">
           {({ open }) => (
             <>
@@ -55,7 +53,6 @@ export default function Header() {
             <Menu.Button className="ml-2 inline-flex rounded-full focus:outline-none focus:ring-2 focus:ring-neutral-400">
               <span className="sr-only">Open user menu</span>
 
-              {/* ✅ بدل الصورة: حرف A (Admin) */}
               <div className="h-8 w-8 rounded-full bg-blue-600 text-white grid place-items-center font-bold text-xs">
   A
 </div>

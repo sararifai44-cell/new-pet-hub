@@ -47,7 +47,6 @@ export default function OrdersListPage() {
     return Array.isArray(list) ? list : [];
   }, [data]);
 
-  // ✅ فلترة من الرياكت
   const filteredOrders = useMemo(() => {
     const search = (filters.search || "").trim().toLowerCase();
     const status = (filters.status || "").toLowerCase();
@@ -80,7 +79,6 @@ export default function OrdersListPage() {
     });
   }, [orders, filters.search, filters.status, filters.payment_status]);
 
-  // ✅ Sorting (حسب filters.sort)
   const sortedOrders = useMemo(() => {
     const sortKey = filters.sort || "newest";
     const arr = [...filteredOrders];
@@ -101,12 +99,10 @@ export default function OrdersListPage() {
     return arr;
   }, [filteredOrders, filters.sort]);
 
-  // ✅ رجّعي الصفحة للأول عند تغيير الفلاتر/السورت
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
 
-  // ✅ Pagination مثل PetListPage
   const totalPages =
     sortedOrders.length === 0 ? 1 : Math.ceil(sortedOrders.length / PAGE_SIZE);
 
@@ -122,7 +118,6 @@ export default function OrdersListPage() {
     setCurrentPage(clamped);
   };
 
-  // ✅ Stats (على filteredOrders)
   const stats = useMemo(() => {
     const total = filteredOrders.length;
     const count = (s) => filteredOrders.filter((o) => (o.status || "").toLowerCase() === s).length;
@@ -139,7 +134,6 @@ export default function OrdersListPage() {
 
   const handleView = (order) => navigate(`/dashboard/store-management/orders/${order.id}`);
 
-  // ✅ Cancel Dialog (بدل confirm/alert)
   const [orderToCancel, setOrderToCancel] = useState(null);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
@@ -204,7 +198,6 @@ export default function OrdersListPage() {
         </CardContent>
       </Card>
 
-      {/* Filters (فيه Sort هلا) */}
       <OrderFilters
         filters={filters}
         onFilterChange={(updaterOrValue) => {
@@ -227,7 +220,6 @@ export default function OrdersListPage() {
           </div>
         </CardHeader>
 
-        {/* Updating overlay */}
         {isFetching && !isLoading && (
           <div className="absolute inset-x-0 top-[66px] h-10 bg-white/70 backdrop-blur flex items-center justify-center border-b border-slate-100">
             <span className="text-xs text-slate-500 inline-flex items-center gap-2">
@@ -255,7 +247,6 @@ export default function OrdersListPage() {
                 isCancelling={isCancelling}
               />
 
-              {/* ✅ Pagination مثل PetListPage */}
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-4">
                 <div className="text-sm text-gray-500">
                   Page {safePage} of {totalPages}

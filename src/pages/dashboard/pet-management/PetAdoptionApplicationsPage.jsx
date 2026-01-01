@@ -33,7 +33,7 @@ const formatDate = (v) => {
 };
 
 export default function PetAdoptionApplicationsPage() {
-  const { id } = useParams(); // هذا petId من الراوت
+  const { id } = useParams(); 
   const navigate = useNavigate();
 
   const { data, isLoading, isError, isFetching, refetch } =
@@ -58,7 +58,6 @@ export default function PetAdoptionApplicationsPage() {
           </p>
         </div>
 
-        {/* ✅ Actions (Back + Refresh) */}
         <div className="flex items-center gap-2">
           <Button
             type="button"

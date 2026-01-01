@@ -1,5 +1,5 @@
 // src/pages/dashboard/pet-management/PetListPage.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, PawPrint, Heart, XCircle, Layers } from "lucide-react";
 import { toast } from "sonner";
@@ -9,12 +9,15 @@ import PetTable from "../../../features/pet/components/PetTable";
 
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
-
 import ConfirmDeleteDialog from "../../../components/ui/confirm-delete-dialog";
 
 import { useGetPetsQuery, useDeletePetMutation } from "../../../features/pet/petApiSlice";
 import { useGetPetTypesQuery } from "../../../features/petType/petTypeApiSlice";
 
+// fallback paging
+const PAGE_SIZE_FALLBACK = 15;
+
+// filter defaults
 const INITIAL_FILTERS = {
   search: "",
   type: "",
@@ -23,26 +26,54 @@ const INITIAL_FILTERS = {
   gender: "",
 };
 
+// normalize text
 const normalize = (v) => String(v ?? "").trim().toLowerCase();
 
 export default function PetListPage() {
   const navigate = useNavigate();
 
+  // ui state
   const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: petsRes, isLoading: isPetsLoading, isError: isPetsError } = useGetPetsQuery();
+  // fetch pets
+  const {
+    data: petsRes,
+    isLoading: isPetsLoading,
+    isError: isPetsError,
+    isFetching,
+    refetch,
+  } = useGetPetsQuery({ page: currentPage }, { refetchOnMountOrArgChange: true });
+
+  // fetch types
   const { data: typesRes } = useGetPetTypesQuery();
 
+  // delete mutation
   const [deletePet, { isLoading: isDeleting }] = useDeletePetMutation();
 
+  // delete dialog
   const [petToDelete, setPetToDelete] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // pets list
   const pets = useMemo(() => {
     const list = petsRes?.data ?? [];
     return Array.isArray(list) ? list : [];
   }, [petsRes]);
 
+  // pagination meta
+  const meta = petsRes?.meta ?? petsRes ?? {};
+  const perPage = Number(meta?.per_page ?? PAGE_SIZE_FALLBACK);
+  const total = Number(meta?.total ?? pets.length);
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
+
+  // clamp page
+  useEffect(() => {
+    if (currentPage !== safePage) setCurrentPage(safePage);
+  }, [totalPages]);
+
+  // map options
   const { petTypes, breeds } = useMemo(() => {
     const raw = typesRes?.data ?? [];
     const typesArr = Array.isArray(raw) ? raw : [];
@@ -59,7 +90,7 @@ export default function PetListPage() {
     return { petTypes, breeds };
   }, [typesRes]);
 
-  // ✅ فلترة اللست
+  // apply filters
   const filteredPets = useMemo(() => {
     const s = normalize(filters.search);
     const typeId = filters.type ? Number(filters.type) : null;
@@ -95,33 +126,39 @@ export default function PetListPage() {
     });
   }, [pets, filters]);
 
-  // Stats
-  const totalPets = pets.length;
+  // stats cards
+  const totalPets = total;
   const availablePets = useMemo(
-    () => pets.filter((p) => !!p?.is_adoptable).length,
-    [pets]
+    () => (petsRes?.data ?? []).filter((p) => !!p?.is_adoptable).length,
+    [petsRes]
   );
-  const notAvailablePets = totalPets - availablePets;
+  const notAvailablePets = Math.max(0, (petsRes?.data ?? []).length - availablePets);
   const petTypesCount = petTypes.length;
 
-  const onFilterChange = (next) => setFilters(next);
-  const onReset = () => setFilters(INITIAL_FILTERS);
+  // change filters
+  const onFilterChange = (next) => {
+    setFilters(next);
+    setCurrentPage(1);
+  };
 
-  // Routes حسب App.jsx
+  // reset filters
+  const onReset = () => {
+    setFilters(INITIAL_FILTERS);
+    setCurrentPage(1);
+  };
+
+  // navigate actions
   const onView = (pet) => navigate(`/dashboard/pet-management/${pet.id}`);
   const onEdit = (pet) => navigate(`/dashboard/pet-management/edit/${pet.id}`);
+  const onApplications = (pet) => navigate(`/dashboard/pet-management/${pet.id}/applications`);
 
-  // ✅ NEW: Pet applications route
-  const onApplications = (pet) =>
-    navigate(`/dashboard/pet-management/${pet.id}/applications`);
-
-  // ✅ بدل window.confirm: افتح الدايالوغ
+  // open delete
   const onDelete = (pet) => {
     setPetToDelete(pet);
     setIsDeleteDialogOpen(true);
   };
 
-  // ✅ تأكيد الحذف من الدايالوغ
+  // confirm delete
   const confirmDelete = async () => {
     if (!petToDelete?.id) return;
 
@@ -137,6 +174,13 @@ export default function PetListPage() {
     }
   };
 
+  // page navigation
+  const goToPage = (page) => {
+    const clamped = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(clamped);
+  };
+
+  // loading state
   if (isPetsLoading) {
     return (
       <div className="p-6">
@@ -149,6 +193,7 @@ export default function PetListPage() {
     );
   }
 
+  // error state
   if (isPetsError) {
     return (
       <div className="p-6">
@@ -163,7 +208,7 @@ export default function PetListPage() {
 
   return (
     <div className="p-6 space-y-8 max-w-6xl mx-auto">
-      {/* Header */}
+      {/* page header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500/20 via-blue-500/5 to-blue-500/25 flex items-center justify-center border border-blue-100 shadow-sm">
@@ -177,16 +222,19 @@ export default function PetListPage() {
           </div>
         </div>
 
-        <Button
-          onClick={() => navigate("/dashboard/pet-management/add")}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add New Pet
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-xs">
+            {isFetching ? "Refreshing..." : "Refresh"}
+          </Button>
+
+          <Button onClick={() => navigate("/dashboard/pet-management/add")} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Add New Pet
+          </Button>
+        </div>
       </div>
 
-      {/* Stats */}
+      {/* quick stats */}
       <Card className="border-slate-200 bg-white shadow-sm">
         <CardContent className="py-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -195,9 +243,7 @@ export default function PetListPage() {
                 <PawPrint className="w-4 h-4 text-violet-600" />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                  Total Pets
-                </p>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Total Pets</p>
                 <p className="text-lg font-semibold text-slate-900">{totalPets}</p>
               </div>
             </div>
@@ -207,9 +253,7 @@ export default function PetListPage() {
                 <Heart className="w-4 h-4 text-emerald-600" />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                  Available
-                </p>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Available</p>
                 <p className="text-lg font-semibold text-slate-900">{availablePets}</p>
               </div>
             </div>
@@ -219,9 +263,7 @@ export default function PetListPage() {
                 <XCircle className="w-4 h-4 text-amber-600" />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                  Not Available
-                </p>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Not Available</p>
                 <p className="text-lg font-semibold text-slate-900">{notAvailablePets}</p>
               </div>
             </div>
@@ -231,9 +273,7 @@ export default function PetListPage() {
                 <Layers className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
-                  Pet Types
-                </p>
+                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Pet Types</p>
                 <p className="text-lg font-semibold text-slate-900">{petTypesCount}</p>
               </div>
             </div>
@@ -241,7 +281,7 @@ export default function PetListPage() {
         </CardContent>
       </Card>
 
-      {/* Filters */}
+      {/* filter controls */}
       <PetFilters
         filters={filters}
         onFilterChange={onFilterChange}
@@ -250,13 +290,13 @@ export default function PetListPage() {
         breeds={breeds}
       />
 
-      {/* Table */}
+      {/* pets table */}
       <Card className="shadow-sm border border-slate-100 bg-white">
         <CardHeader className="pb-4 border-b border-slate-100">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold text-slate-900">All Pets</CardTitle>
             <span className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-              {filteredPets.length} pets
+              Page {safePage} of {totalPages}
             </span>
           </div>
         </CardHeader>
@@ -266,14 +306,52 @@ export default function PetListPage() {
             pets={filteredPets}
             onView={onView}
             onEdit={onEdit}
-            onDelete={onDelete} // ✅ يفتح Dialog
-            onApplications={onApplications} // ✅ NEW: يروح على Pet Applications
+            onDelete={onDelete}
+            onApplications={onApplications}
             showActions
           />
+
+          {/* page controls */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-4">
+            <div className="text-sm text-gray-500">
+              Page {safePage} of {totalPages} • Total {total}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              <Button variant="outline" size="sm" disabled={safePage === 1} onClick={() => goToPage(safePage - 1)}>
+                &lt; Previous
+              </Button>
+
+              {Array.from({ length: totalPages }).map((_, idx) => {
+                const pageNumber = idx + 1;
+                const isActive = pageNumber === safePage;
+                return (
+                  <Button
+                    key={pageNumber}
+                    size="sm"
+                    variant={isActive ? "default" : "outline"}
+                    onClick={() => goToPage(pageNumber)}
+                    className={"w-9 h-9 px-0 text-sm " + (isActive ? "" : "bg-white")}
+                  >
+                    {pageNumber}
+                  </Button>
+                );
+              })}
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safePage === totalPages}
+                onClick={() => goToPage(safePage + 1)}
+              >
+                Next &gt;
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* ✅ Confirm Delete Dialog */}
+      {/* delete confirm */}
       <ConfirmDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={(open) => {

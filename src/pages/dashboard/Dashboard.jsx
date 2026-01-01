@@ -11,7 +11,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-// بيانات مناسبة للـ ERD
 const data = [
   { name: 'Jan', Adoptions: 40, Appointments: 24, Boarding: 15 },
   { name: 'Feb', Adoptions: 30, Appointments: 13, Boarding: 20 },
@@ -27,7 +26,6 @@ export default function Dashboard() {
     <div className="flex flex-col gap-3 text-sm">
       <DashboardStatsGrid />
 
-      {/* صغّرتها + خليتها responsive */}
       <div className="flex flex-col xl:flex-row gap-3 w-full">
         <TransactionChart />
         <RecentActivities />

@@ -106,7 +106,6 @@ const PetTable = ({
                 }}
                 className="hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                {/* ✅ Pet (الصورة + الاسم كبسة بتودّي للتفاصيل) */}
                 <TableCell>
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
@@ -136,13 +135,11 @@ const PetTable = ({
                   </div>
                 </TableCell>
 
-                {/* ✅ Type & Breed (كمان كبسة تودّي للتفاصيل) */}
                 <TableCell>
                   <div className="text-sm font-medium text-gray-900">{typeName}</div>
                   <div className="text-xs text-gray-500">{breedName}</div>
                 </TableCell>
 
-                {/* ✅ Status (كمان كبسة تودّي للتفاصيل) */}
                 <TableCell>
                   <Badge
                     variant="outline"
@@ -158,7 +155,6 @@ const PetTable = ({
 
                 {showActions && (
                   <TableCell onClick={stop}>
-                    {/* ✅ خلية الأكشن نفسها ما تعمل navigate */}
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"

@@ -19,10 +19,19 @@ function fmtMoney(v) {
   return n.toFixed(2);
 }
 
+function normStatus(v) {
+  return String(v ?? "").trim().toLowerCase();
+}
+
 function StatusPill({ status }) {
-  const s = String(status || "").toLowerCase();
+  const s = normStatus(status);
   const base =
     "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium";
+
+  if (s === "pending")
+    return (
+      <span className={`${base} bg-amber-100 text-amber-800`}>Pending</span>
+    );
 
   if (s === "confirmed")
     return (
@@ -30,16 +39,25 @@ function StatusPill({ status }) {
         Confirmed
       </span>
     );
-  if (s === "rejected")
-    return <span className={`${base} bg-rose-100 text-rose-800`}>Rejected</span>;
-  if (s === "cancelled")
+
+  if (s === "completed")
     return (
-      <span className={`${base} bg-neutral-100 text-neutral-700`}>
-        Cancelled
-      </span>
+      <span className={`${base} bg-sky-100 text-sky-800`}>Completed</span>
     );
 
-  return <span className={`${base} bg-amber-100 text-amber-800`}>Pending</span>;
+  if (s === "rejected")
+    return <span className={`${base} bg-rose-100 text-rose-800`}>Rejected</span>;
+
+  if (s === "cancelled")
+    return (
+      <span className={`${base} bg-neutral-100 text-neutral-700`}>Cancelled</span>
+    );
+
+  return (
+    <span className={`${base} bg-neutral-100 text-neutral-700`}>
+      {s || "unknown"}
+    </span>
+  );
 }
 
 function DateTimeCell({ value }) {
@@ -89,7 +107,8 @@ export default function BoardingReservationTable({
         <tbody>
           {reservations.map((r) => {
             const disabled = isUpdating || busyId === r.id;
-            const status = String(r.status || "").toLowerCase();
+
+            const status = normStatus(r.status);
 
             const canConfirm = status === "pending";
             const canReject = status === "pending";
@@ -123,7 +142,10 @@ export default function BoardingReservationTable({
                 title="Click to view"
               >
                 <td className="px-4 py-3 font-medium">{r.id}</td>
-                <td className="px-4 py-3">{r.user_id}</td>
+
+                <td className="px-4 py-3">
+                  {r.user?.name ?? r.user?.email ?? r.user_id ?? "-"}
+                </td>
 
                 <td className="px-4 py-3">
                   <DateTimeCell value={r.start_at} />

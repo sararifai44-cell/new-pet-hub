@@ -134,7 +134,6 @@ export default function OrderTable({ orders, onView, onCancel, isCancelling }) {
                 {/* Created */}
                 <td className="p-3 text-slate-700">{formatDate(o.created_at)}</td>
 
-                {/* Actions (بدون navigation) */}
                 <td className="p-3" onClick={stop}>
                   <div className="flex justify-end gap-2">
                     <Button

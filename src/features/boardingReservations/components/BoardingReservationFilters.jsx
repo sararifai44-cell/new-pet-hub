@@ -12,14 +12,14 @@ export default function BoardingReservationFilters({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
         <div>
           <label className="block text-xs text-neutral-500 mb-1">
-            Search (ID / User ID)
+            Search (ID / User name / email / Type)
           </label>
           <Input
             value={filters.search}
             onChange={(e) =>
               onFilterChange((p) => ({ ...p, search: e.target.value }))
             }
-            placeholder="e.g. 3 or user 2"
+            placeholder='e.g."User" or user4@example.com or Dog'
           />
         </div>
 

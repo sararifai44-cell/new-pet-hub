@@ -53,15 +53,12 @@ const PetForm = ({
     defaultValues,
   });
 
-  // ✅ adoptable controlled value
   const isAdoptable = watch("is_adoptable");
 
-  // صور DB
   const [existingImages, setExistingImages] = useState(
     normalizeExistingImages(initialData || {})
   );
 
-  // صور جديدة
   const [newImages, setNewImages] = useState([]); // [{ file, previewUrl }]
 
   const clearNewImages = () => {
@@ -75,7 +72,6 @@ const PetForm = ({
     reset(getPetDefaultValues(initialData || {}));
     setExistingImages(normalizeExistingImages(initialData || {}));
     clearNewImages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [petId, reset]);
 
   const typeId = watch("type_id");
@@ -143,7 +139,6 @@ const PetForm = ({
     return () => {
       newImages.forEach((x) => x?.previewUrl && URL.revokeObjectURL(x.previewUrl));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isEdit = !!petId;
@@ -160,9 +155,6 @@ const PetForm = ({
     fd.append("gender", String(data.gender));
     fd.append("date_of_birth", String(data.date_of_birth));
 
-    // ✅ nullable|string behavior:
-    // - if empty on CREATE => don't send (backend sees null)
-    // - if empty on EDIT and there was an old description => send "" to clear it
     const currentDesc =
       data.description == null ? "" : String(data.description).trim();
 
@@ -174,9 +166,7 @@ const PetForm = ({
     } else if (isEdit && initialDesc) {
       fd.append("description", "");
     }
-    // else: do not append description
 
-    // ✅ IMPORTANT: use controlled value to avoid RHF checkbox quirks on Add
     fd.append("is_adoptable", isAdoptable ? "1" : "0");
 
     newImages.forEach(({ file }) => {
@@ -392,7 +382,6 @@ const PetForm = ({
         )}
       </div>
 
-      {/* ✅ Adoptable (controlled) */}
       {showAdoptionOption && (
         <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <input

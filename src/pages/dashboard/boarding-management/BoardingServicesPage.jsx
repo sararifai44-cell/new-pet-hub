@@ -44,7 +44,6 @@ export default function BoardingServicesPage() {
 
   const rows = listRes?.data || [];
 
-  // ✅ فلترة: بس English (name_en)
   const filteredRows = useMemo(() => {
     const q = (filters.q || "").trim().toLowerCase();
     const active = (filters.active || "").trim();
@@ -66,7 +65,6 @@ export default function BoardingServicesPage() {
     });
   }, [rows, filters]);
 
-  // ✅ Stats (على كامل rows)
   const totalServices = rows.length;
 
   const activeServices = useMemo(
@@ -150,7 +148,6 @@ export default function BoardingServicesPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div className="flex items-start gap-3">
-          {/* ✅ أيقونة جديدة بدل Wrench */}
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-indigo-500/5 to-indigo-500/25 flex items-center justify-center border border-indigo-100 shadow-sm">
             <ClipboardList className="w-5 h-5 text-indigo-600" />
           </div>
@@ -217,7 +214,6 @@ export default function BoardingServicesPage() {
               </div>
             </div>
 
-            {/* ✅ بدل Avg Price */}
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full border border-blue-200 bg-blue-50 flex items-center justify-center">
                 <BadgeDollarSign className="w-4 h-4 text-blue-600" />

@@ -13,9 +13,7 @@ const baseLinkClasses =
 
 const isPathActive = (pathname, path) => {
   if (!path) return false;
-  // dashboard لازم يكون exact
   if (path === "/dashboard") return pathname === "/dashboard";
-  // باقي الصفحات: active لو نفس المسار أو ضمنه (details)
   return pathname === path || pathname.startsWith(path + "/");
 };
 

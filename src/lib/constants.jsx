@@ -1,7 +1,6 @@
 // src/lib/constants.jsx
 import React from "react";
 
-// من HeroIcons (عامة)
 import {
   HiOutlineViewGrid,
   HiOutlineHeart,
@@ -14,7 +13,6 @@ import {
   HiOutlineUserGroup,
 } from "react-icons/hi";
 
-// أيقونات حيوانات/بصمات
 import { PiPawPrintLight } from "react-icons/pi";
 import { GiSittingDog, GiCat } from "react-icons/gi";
 
@@ -26,7 +24,6 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     icon: <HiOutlineViewGrid />,
   },
 
-  // 🐾 مجموعة إدارة الحيوانات
   {
     key: "pet-management",
     label: "Pet Management",
@@ -47,7 +44,6 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     ],
   },
 
-  // 💛 مركز التبني (✅ Link مباشر)
   {
     key: "adoption-center",
     label: "Adoption Center",
@@ -55,7 +51,6 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     icon: <HiOutlineHeart />,
   },
 
-  // ✅ Boarding — صار Group وفيه الحجوزات + الخدمات
   {
     key: "boarding-management",
     label: "Boarding Management",
@@ -74,7 +69,6 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     ],
   },
 
-  // 📅 مواعيد (خلّيناها متل ما هي هلأ)
   {
     key: "appointments-management",
     label: "Appointments Management",
@@ -82,7 +76,6 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     icon: <HiOutlineBookOpen />,
   },
 
-  // 🩺 السجلات الطبية
   {
     key: "medical-records",
     label: "Medical Records",
@@ -90,7 +83,6 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     icon: <HiOutlineClipboardList />,
   },
 
-  // 🛒 المتجر — Group
   {
     key: "store-management",
     label: "Store Management",
@@ -114,7 +106,6 @@ export const DASHBOARD_SIDEBAR_LINKS = [
     ],
   },
 
-  // 👤 إدارة المستخدمين
   {
     key: "user-management",
     label: "User Management",

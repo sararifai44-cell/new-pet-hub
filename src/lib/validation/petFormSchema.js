@@ -1,4 +1,3 @@
-// src/lib/validation/petFormSchema.js
 import { z } from "zod";
 
 export const petFormSchema = z.object({
@@ -12,9 +11,6 @@ export const petFormSchema = z.object({
     invalid_type_error: "Please select gender",
   }),
 
-  // ✅ nullable|string (backend behavior):
-  // - empty / whitespace => null
-  // - if provided => must be string
   description: z.preprocess((v) => {
     if (v == null) return null;
     const s = String(v).trim();
@@ -45,8 +41,6 @@ export const getPetDefaultValues = (initialData = {}) => {
 
     gender: initialData?.gender ? String(initialData.gender).toLowerCase() : "",
 
-    // ✅ keep form controlled (textarea always string)
-    // submit-time preprocess will convert "" -> null
     description:
       initialData?.description == null ? "" : String(initialData.description),
 

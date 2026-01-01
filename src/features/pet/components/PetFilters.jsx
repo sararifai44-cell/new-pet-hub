@@ -36,7 +36,6 @@ const PetFilters = ({
   };
 
   const handleTypeChange = (typeId) => {
-    // ✅ لما يتغير النوع لازم نفضّي الـ breed
     onFilterChange({ ...filters, type: typeId, breed: "" });
   };
 
@@ -53,7 +52,6 @@ const PetFilters = ({
   };
 
   const removeFilter = (filterKey) => {
-    // ✅ إذا شلنا type لازم كمان نشيل breed
     if (filterKey === "type") {
       onFilterChange({ ...filters, type: "", breed: "" });
       return;

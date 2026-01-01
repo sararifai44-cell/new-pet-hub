@@ -5,7 +5,6 @@ const pickData = (res) =>
 
 export const adoptionApplicationsApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ GET /api/admin/adoption-applications (index)
     getAdoptionApplications: builder.query({
       query: () => ({
         url: "admin/adoption-applications",
@@ -20,7 +19,6 @@ export const adoptionApplicationsApiSlice = apiSlice.injectEndpoints({
       },
     }),
 
-    // ✅ GET /api/admin/adoption-applications/:id (show)
     getAdoptionApplicationById: builder.query({
       query: (id) => ({
         url: `admin/adoption-applications/${id}`,
@@ -30,12 +28,11 @@ export const adoptionApplicationsApiSlice = apiSlice.injectEndpoints({
       providesTags: (_r, _e, id) => [{ type: "AdoptionApplication", id }],
     }),
 
-    // ✅ PATCH /api/admin/adoption-applications/:id
     updateAdoptionApplicationStatus: builder.mutation({
       query: ({ id, status }) => ({
         url: `admin/adoption-applications/${id}`,
         method: "PATCH",
-        body: { status }, // مثال: { status: "rejected" }
+        body: { status },
       }),
       invalidatesTags: (_r, _e, { id }) => [
         { type: "AdoptionApplication", id: "LIST" },
@@ -43,7 +40,6 @@ export const adoptionApplicationsApiSlice = apiSlice.injectEndpoints({
       ],
     }),
 
-    // ✅ DELETE /api/admin/adoption-applications/:id
     deleteAdoptionApplication: builder.mutation({
       query: (id) => ({
         url: `admin/adoption-applications/${id}`,

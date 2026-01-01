@@ -1,3 +1,4 @@
+// src/pages/dashboard/boarding-management/BoardingReservationDetailsPage.jsx
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Loader2, CalendarClock } from "lucide-react";
@@ -45,21 +46,17 @@ function fmtMoney(v) {
   return n.toFixed(2);
 }
 
-// ✅ Admin rules: no cancel from dashboard
 function getAllowedAdminStatuses(current) {
   const s = String(current || "").toLowerCase();
 
-  // cancelled: user-only -> read-only in admin UI
   if (s === "cancelled") return ["cancelled"];
 
-  // final states
   if (s === "rejected") return ["rejected"];
   if (s === "completed") return ["completed"];
 
   if (s === "pending") return ["pending", "confirmed", "rejected"];
   if (s === "confirmed") return ["confirmed", "completed"];
 
-  // fallback
   return [s || "pending"];
 }
 
@@ -100,7 +97,9 @@ export default function BoardingReservationDetailsPage() {
   }
 
   const allowed = getAllowedAdminStatuses(reservation.status);
-  const statusLocked = allowed.length === 1 && allowed[0] === String(reservation.status).toLowerCase();
+  const statusLocked =
+    allowed.length === 1 &&
+    allowed[0] === String(reservation.status).toLowerCase();
 
   const isDirty = status && status !== reservation.status;
 
@@ -118,6 +117,18 @@ export default function BoardingReservationDetailsPage() {
   };
 
   const services = Array.isArray(reservation.services) ? reservation.services : [];
+
+  const userLabel =
+    reservation.user?.name ??
+    reservation.user?.email ??
+    reservation.user_id ??
+    "-";
+
+  const petTypeLabel =
+    reservation.pet_type?.name ?? reservation.pet_type_id ?? "-";
+
+  const petBreedLabel =
+    reservation.pet_breed?.name ?? reservation.pet_breed_id ?? "-";
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
@@ -143,8 +154,12 @@ export default function BoardingReservationDetailsPage() {
                   Reservation #{reservation.id}
                 </h1>
                 <p className="text-sm text-slate-500 truncate">
-                  User: <span className="font-medium text-slate-700">{reservation.user_id}</span>{" "}
-                  • Status: <span className="font-medium text-slate-700">{pretty(reservation.status)}</span>
+                  User:{" "}
+                  <span className="font-medium text-slate-700">{userLabel}</span>{" "}
+                  • Status:{" "}
+                  <span className="font-medium text-slate-700">
+                    {pretty(reservation.status)}
+                  </span>
                 </p>
               </div>
             </div>
@@ -172,10 +187,14 @@ export default function BoardingReservationDetailsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <InfoItem label="Reservation ID" value={reservation.id} />
                 <InfoItem label="Status" value={pretty(reservation.status)} />
-                <InfoItem label="User ID" value={reservation.user_id} />
+
+                <InfoItem label="User" value={userLabel} />
+
                 <InfoItem label="Age (months)" value={reservation.age_months} />
-                <InfoItem label="Pet Type ID" value={reservation.pet_type_id} />
-                <InfoItem label="Pet Breed ID" value={reservation.pet_breed_id} />
+
+                <InfoItem label="Pet Type" value={petTypeLabel} />
+                <InfoItem label="Pet Breed" value={petBreedLabel} />
+
                 <InfoItem label="Start" value={formatDate(reservation.start_at)} />
                 <InfoItem label="End" value={formatDate(reservation.end_at)} />
                 <InfoItem label="Billable Hours" value={reservation.billable_hours} />

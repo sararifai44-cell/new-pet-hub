@@ -25,7 +25,6 @@ export default function AddPetPage() {
   const handleSubmit = async (formData) => {
     try {
       await createPet(formData).unwrap();
-      // ✅ Route صح حسب App.jsx
       navigate("/dashboard/pet-management");
     } catch (e) {
       console.error(e);

@@ -37,7 +37,6 @@ import {
   useDeleteProductCategoryMutation,
 } from "../../../features/productCategory/productCategoryApiSlice";
 
-// نحول الريسبونس تبع الـ API لشكل مرتب نستخدمه بالواجهة
 const mapCategories = (response) => {
   if (!response) return [];
   const raw = response.data ?? response;
@@ -71,14 +70,12 @@ const ProductCategoriesPage = () => {
     [categoriesResponse]
   );
 
-  // هل واجهة المتصفح عربية؟
   const isArabicUI =
     typeof navigator !== "undefined" &&
     (navigator.language || navigator.userLanguage || "")
       .toLowerCase()
       .startsWith("ar");
 
-  // اسم العرض حسب لغة المتصفح
   const getDisplayName = (cat) => {
     if (!cat) return "";
     if (isArabicUI) {
@@ -87,7 +84,6 @@ const ProductCategoriesPage = () => {
     return cat.name_en || cat.name_ar || cat.name || "";
   };
 
-  // فلترة بسيطة
   const [filters, setFilters] = useState({ search: "" });
 
   const filteredCategories = useMemo(() => {
@@ -103,7 +99,6 @@ const ProductCategoriesPage = () => {
     });
   }, [categories, filters]);
 
-  // Dialog الإضافة/التعديل
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formValues, setFormValues] = useState({
@@ -111,13 +106,11 @@ const ProductCategoriesPage = () => {
     name_ar: "",
   });
 
-  // Dialog الحذف
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
 
   const totalCategories = categories.length;
 
-  // ========= Helpers ==========
 
   const resetForm = () => {
     setFormValues({
@@ -223,7 +216,6 @@ const ProductCategoriesPage = () => {
 
   const isSaving = isCreating || isUpdating;
 
-  // ========== حالات التحميل / الخطأ ==========
 
   if (isLoading) {
     return (
@@ -349,7 +341,6 @@ const ProductCategoriesPage = () => {
                     <th className="text-left px-4 py-2 font-semibold whitespace-nowrap">
                       ID
                     </th>
-                    {/* الهيدر بالنص */}
                     <th className="text-center px-4 py-2 font-semibold whitespace-nowrap">
                       {isArabicUI ? "الاسم" : "Name"}
                     </th>
@@ -369,7 +360,6 @@ const ProductCategoriesPage = () => {
                         #{cat.id}
                       </td>
 
-                      {/* حقل الاسم بالنص */}
                       <td className="px-4 py-2.5 align-middle text-center">
                         <span
                           className="font-medium text-slate-900 truncate inline-block max-w-[180px]"
@@ -411,7 +401,6 @@ const ProductCategoriesPage = () => {
         </CardContent>
       </Card>
 
-      {/* Dialog إضافة / تعديل */}
       <Dialog
         open={isFormOpen}
         onOpenChange={(open) => {

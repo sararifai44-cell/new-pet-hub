@@ -1,10 +1,8 @@
-import { apiSlice } from "../../App/apiSlice";
-
+import { apiSlice } from "../../app/apiSlice";
 const asArray = (res) => (Array.isArray(res?.data) ? res.data : []);
 
 export const petAdoptionApplicationsApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ GET /api/admin/adoption-applications/pet/:petId
     getAdoptionApplicationsByPetId: builder.query({
       query: (petId) => ({
         url: `admin/adoption-applications/pet/${petId}`,

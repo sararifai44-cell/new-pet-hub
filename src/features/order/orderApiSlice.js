@@ -31,7 +31,6 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       ],
     }),
 
-    // ✅ إلغاء بدل حذف
     cancelOrder: builder.mutation({
       query: (id) => ({
         url: `/admin/orders/${id}/status`,

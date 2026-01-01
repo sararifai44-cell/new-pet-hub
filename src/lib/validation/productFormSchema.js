@@ -5,7 +5,6 @@ export const productFormSchema = z.object({
   name_en: z.string().min(2, "English name must be at least 2 characters"),
   name_ar: z.string().min(2, "Arabic name must be at least 2 characters"),
 
-  // ✅ REQUIRED (سبب الـ422)
   pet_type_id: z.string().min(1, "Please select a pet type"),
 
   product_category_id: z.string().min(1, "Please select a category"),
@@ -19,7 +18,6 @@ export const productFormSchema = z.object({
     .int("Stock must be an integer")
     .min(0, "Stock must be greater than or equal to 0"),
 
-  // ✅ nullable: إذا فاضي -> نخليه "" بالفرونت، وبالـFormData منقرر نبعتو أو لا
   description: z.preprocess(
     (v) => (v == null ? "" : String(v)),
     z.string().optional()

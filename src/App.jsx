@@ -58,15 +58,14 @@ function App() {
             />
             <Route path="pet-management/:id" element={<PetDetailsPage />} />
 
-            {/* ✅ Boarding Management */}
-            {/* redirect داخل نفس nested route */}
+            {/*  Boarding Management */}
             <Route
               path="boarding-management"
               element={<Navigate to="bookings" replace />}
             />
             <Route path="boarding-management/bookings" element={<TemporaryBookingsPage />} />
 
-            {/* ✅ تفاصيل الحجز */}
+            {/*  تفاصيل الحجز */}
             <Route
               path="boarding-management/bookings/:id"
               element={<BoardingReservationDetailsPage />}

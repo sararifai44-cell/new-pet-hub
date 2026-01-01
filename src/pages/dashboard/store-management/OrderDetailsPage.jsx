@@ -30,10 +30,7 @@ function pretty(v) {
   return String(v ?? "-").replaceAll("_", " ");
 }
 
-/**
- * ✅ صار يقرأ cover_image حسب الريسبونس:
- * item.product.cover_image
- */
+
 function getProductImage(product) {
   const raw =
     product?.cover_image ||
@@ -44,10 +41,8 @@ function getProductImage(product) {
 
   if (!raw) return null;
 
-  // string URL
   if (typeof raw === "string") return raw;
 
-  // object {url/path/original_url/...}
   if (typeof raw === "object") {
     return (
       raw?.url ||
@@ -88,7 +83,6 @@ const OrderDetailsPage = () => {
 
   const isDirty = order ? status && status !== order.status : false;
 
-  // ✅ Confirm dialog state بدل confirm/alert
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const openCancelDialog = () => {
@@ -107,7 +101,6 @@ const OrderDetailsPage = () => {
     if (!isDirty) return;
 
     try {
-      // ✅ حماية إضافية: ما نرسل غير القيم اللي الباك بيفهمها
       const allowed = ["pending", "in_progress", "completed", "cancelled"];
       if (!allowed.includes(String(status || "").toLowerCase())) {
         toast.error("Invalid status selected.");
@@ -122,7 +115,6 @@ const OrderDetailsPage = () => {
     }
   };
 
-  // ✅ صار الإلغاء يتم من داخل الديالوج
   const confirmCancel = async () => {
     if (!order?.id) return;
     if (!canCancel) return;
@@ -235,7 +227,6 @@ const OrderDetailsPage = () => {
                 onChange={(e) => setStatus(e.target.value)}
                 className="mt-1 w-full h-10 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-200"
               >
-                {/* ✅ مطابق تماماً للباك */}
                 <option value="pending">Pending</option>
                 <option value="in_progress">In progress</option>
                 <option value="completed">Completed</option>

@@ -9,7 +9,6 @@ import { Badge } from "../../../components/ui/badge";
 
 import { useGetPetQuery } from "../../../features/pet/petApiSlice";
 
-// helpers (صور DB فقط)
 const resolveImageSrc = (img) => {
   if (!img) return null;
   if (typeof img === "string") return img;

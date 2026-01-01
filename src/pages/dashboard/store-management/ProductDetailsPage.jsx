@@ -33,7 +33,6 @@ const normalizeProduct = (p) => {
         .filter(Boolean)
     : [];
 
-  // ✅ fallback cover_image
   if (normalizedImages.length === 0 && p.cover_image) {
     normalizedImages = [{ url: p.cover_image, alt: p.name_en || p.name || "Cover" }];
   }

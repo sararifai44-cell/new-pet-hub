@@ -30,7 +30,6 @@ export default function EditPetPage() {
   const handleSubmit = async (formData) => {
     try {
       await updatePet({ id: petId, formData }).unwrap();
-      // ✅ بعد الحفظ رجّع عاللست (Route صح)
       navigate("/dashboard/pet-management");
     } catch (e) {
       console.error(e);

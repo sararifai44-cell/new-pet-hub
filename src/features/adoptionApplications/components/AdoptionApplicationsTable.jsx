@@ -42,7 +42,6 @@ export default function AdoptionApplicationsTable({
       <table className="w-full text-sm">
         <thead className="bg-slate-50">
           <tr className="border-b border-slate-200">
-            {/* ✅ ID قبل الصورة */}
             <th className="text-left p-3 text-slate-600 font-semibold">ID</th>
             <th className="text-left p-3 text-slate-600 font-semibold">Image</th>
             <th className="text-left p-3 text-slate-600 font-semibold">Pet</th>
@@ -73,7 +72,6 @@ export default function AdoptionApplicationsTable({
                 }}
                 className="border-b border-slate-100 hover:bg-slate-50/60 cursor-pointer"
               >
-                {/* ✅ ID بدون # */}
                 <td className="p-3 font-medium text-slate-900">{a.id}</td>
 
                 {/* Image */}
@@ -94,7 +92,6 @@ export default function AdoptionApplicationsTable({
                   </div>
                 </td>
 
-                {/* Pet name فقط */}
                 <td className="p-3 font-medium text-slate-900">{petName}</td>
 
                 {/* User */}
@@ -129,7 +126,6 @@ export default function AdoptionApplicationsTable({
 
                 {/* Actions */}
                 <td className="p-3">
-                  {/* ✅ يمنع row click */}
                   <div
                     className="flex flex-wrap gap-2"
                     onClick={(e) => e.stopPropagation()}

@@ -1,5 +1,5 @@
 // src/pages/dashboard/store-management/ProductListPage.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -25,16 +25,42 @@ import { useGetPetTypesQuery } from "../../../features/petType/petTypeApiSlice";
 
 import ConfirmDeleteDialog from "../../../components/ui/confirm-delete-dialog";
 
+const PAGE_SIZE_FALLBACK = 15;
+
 export default function ProductListPage() {
   const navigate = useNavigate();
 
-  const { data: productsRes, isLoading, isError } = useGetProductsQuery();
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Server pagination
+  const {
+    data: productsRes,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useGetProductsQuery(
+    { page: currentPage, per_page: PAGE_SIZE_FALLBACK },
+    { refetchOnMountOrArgChange: true }
+  );
+
   const products = productsRes?.data ?? [];
+
+  const meta = productsRes?.meta ?? productsRes ?? {};
+  const perPage = Number(meta?.per_page ?? PAGE_SIZE_FALLBACK);
+  const total = Number(meta?.total ?? products.length);
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
+
+  useEffect(() => {
+    if (currentPage !== safePage) setCurrentPage(safePage);
+    
+  }, [totalPages]);
 
   const { data: categoriesRes } = useGetProductCategoriesQuery();
   const categories = categoriesRes?.data ?? [];
 
-  // ✅ Pet Types للفلتر
   const { data: petTypesRes } = useGetPetTypesQuery();
   const petTypes = petTypesRes?.data ?? [];
 
@@ -42,7 +68,7 @@ export default function ProductListPage() {
 
   const [filters, setFilters] = useState({
     search: "",
-    pet_type: "",     // ✅ جديد
+    pet_type: "",
     category: "",
     is_active: "",
     stock: "",
@@ -55,7 +81,6 @@ export default function ProductListPage() {
     const categoryId = filters.category ? Number(filters.category) : null;
 
     return (products || []).filter((p) => {
-      // Search
       if (search) {
         const text = [
           p.name,
@@ -74,23 +99,19 @@ export default function ProductListPage() {
         if (!text.includes(search)) return false;
       }
 
-      // ✅ Pet Type filter
       if (petTypeId) {
         const pid = Number(p.pet_type?.id ?? p.pet_type_id ?? 0);
         if (pid !== petTypeId) return false;
       }
 
-      // Category
       if (categoryId) {
         const cid = Number(p.category?.id ?? p.product_category_id ?? 0);
         if (cid !== categoryId) return false;
       }
 
-      // Active
       if (filters.is_active === "active" && !p.is_active) return false;
       if (filters.is_active === "inactive" && p.is_active) return false;
 
-      // Stock
       const stockQty = Number(p.stock_quantity ?? 0);
       if (filters.stock === "in-stock" && !(stockQty > 0)) return false;
       if (filters.stock === "out-of-stock" && stockQty > 0) return false;
@@ -101,7 +122,6 @@ export default function ProductListPage() {
 
   const stats = useMemo(() => {
     const list = products || [];
-    const total = list.length;
     const active = list.filter((p) => !!p.is_active).length;
 
     const lowStock = list.filter((p) => {
@@ -111,7 +131,7 @@ export default function ProductListPage() {
 
     const outOfStock = list.filter((p) => Number(p.stock_quantity ?? 0) === 0).length;
 
-    return { total, active, lowStock, outOfStock };
+    return { active, lowStock, outOfStock };
   }, [products]);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -145,6 +165,17 @@ export default function ProductListPage() {
       is_active: "",
       stock: "",
     });
+    setCurrentPage(1);
+  };
+
+  const onFilterChange = (next) => {
+    setFilters(next);
+    setCurrentPage(1);
+  };
+
+  const goToPage = (page) => {
+    const clamped = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(clamped);
   };
 
   return (
@@ -156,6 +187,10 @@ export default function ProductListPage() {
         </div>
 
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="text-xs">
+            {isFetching ? "Refreshing..." : "Refresh"}
+          </Button>
+
           <Button type="button" onClick={handleAddProduct} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Add Product
@@ -163,6 +198,7 @@ export default function ProductListPage() {
         </div>
       </div>
 
+      {/* Stats */}
       <Card className="border-slate-200 bg-white shadow-sm">
         <CardContent className="py-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -174,7 +210,7 @@ export default function ProductListPage() {
                 <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">
                   Total Products
                 </p>
-                <p className="text-lg font-semibold text-slate-900">{stats.total}</p>
+                <p className="text-lg font-semibold text-slate-900">{total}</p>
               </div>
             </div>
 
@@ -219,10 +255,10 @@ export default function ProductListPage() {
 
       <ProductFilters
         filters={filters}
-        onFilterChange={setFilters}
+        onFilterChange={onFilterChange}
         onReset={resetFilters}
         categories={categories}
-        petTypes={petTypes}   // ✅ تمرير Pet Types
+        petTypes={petTypes}
       />
 
       <Card className="border-slate-200 bg-white shadow-sm">
@@ -237,12 +273,56 @@ export default function ProductListPage() {
           ) : isError ? (
             <p className="text-center text-red-500 py-8">Failed to load products.</p>
           ) : (
-            <ProductTable
-              products={filteredProducts}
-              onView={handleViewProduct}
-              onEdit={handleEditProduct}
-              onDelete={handleDeleteClick}
-            />
+            <>
+              <ProductTable
+                products={filteredProducts}
+                onView={handleViewProduct}
+                onEdit={handleEditProduct}
+                onDelete={handleDeleteClick}
+              />
+
+              <div className="flex flex-col md:flex-row items-center justify-center gap-3 mt-4">
+                <div className="text-sm text-gray-500">
+                  Page {safePage} of {totalPages} • Total {total}
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={safePage === 1}
+                    onClick={() => goToPage(safePage - 1)}
+                  >
+                    &lt; Previous
+                  </Button>
+
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNumber = idx + 1;
+                    const isActive = pageNumber === safePage;
+                    return (
+                      <Button
+                        key={pageNumber}
+                        size="sm"
+                        variant={isActive ? "default" : "outline"}
+                        onClick={() => goToPage(pageNumber)}
+                        className={"w-9 h-9 px-0 text-sm " + (isActive ? "" : "bg-white")}
+                      >
+                        {pageNumber}
+                      </Button>
+                    );
+                  })}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={safePage === totalPages}
+                    onClick={() => goToPage(safePage + 1)}
+                  >
+                    Next &gt;
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

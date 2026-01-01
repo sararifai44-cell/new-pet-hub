@@ -4,7 +4,9 @@ import { apiSlice } from "../../App/apiSlice";
 export const productApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getProducts: builder.query({
-      query: () => "admin/products",
+      query: ({ page = 1, per_page = 15 } = {}) =>
+        `admin/products?page=${page}&per_page=${per_page}`,
+
       providesTags: (result) => {
         const list = result?.data ?? [];
         return [
@@ -23,7 +25,7 @@ export const productApiSlice = apiSlice.injectEndpoints({
       query: (formData) => ({
         url: "admin/products",
         method: "POST",
-        body: formData, // ✅ FormData
+        body: formData,
       }),
       invalidatesTags: [{ type: "Product", id: "LIST" }],
     }),
@@ -32,7 +34,7 @@ export const productApiSlice = apiSlice.injectEndpoints({
       query: ({ id, formData }) => ({
         url: `admin/products/${id}`,
         method: "POST",
-        body: formData, // ✅ FormData فيه _method=PATCH
+        body: formData,
       }),
       invalidatesTags: (result, error, { id }) => [
         { type: "Product", id },

@@ -55,7 +55,6 @@ export default function TemporaryBookingsPage() {
     return Array.isArray(list) ? list : [];
   }, [data]);
 
-  // filter
   const filtered = useMemo(() => {
     const search = normalize(filters.search);
     const status = normalize(filters.status);
@@ -65,16 +64,30 @@ export default function TemporaryBookingsPage() {
       if (status && rStatus !== status) return false;
 
       if (search) {
+        const userId = r?.user?.id ?? r?.user_id ?? "";
+        const userName = r?.user?.name ?? "";
+        const userEmail = r?.user?.email ?? "";
+
+        const typeName = r?.pet_type?.name ?? "";
+        const breedName = r?.pet_breed?.name ?? ""; 
+        const breedId = r?.pet_breed_id ?? "";
+
         const hay = [
-          r.id,
-          r.user_id,
-          r.pet_type_id,
-          r.pet_breed_id,
-          r.status,
-          r.start_at,
-          r.end_at,
+          r?.id,
+          userId,
+          `user ${userId}`,     
+          userName,
+          userEmail,
+          r?.pet_type_id,
+          typeName,              
+          breedId,
+          breedName,            
+          r?.status,
+          r?.start_at,
+          r?.end_at,
+          r?.total,
         ]
-          .filter((x) => x !== null && x !== undefined)
+          .filter((x) => x !== null && x !== undefined && String(x).trim() !== "")
           .join(" ")
           .toLowerCase();
 
@@ -117,7 +130,7 @@ export default function TemporaryBookingsPage() {
     setCurrentPage(clamped);
   };
 
-  // stats (كل الحالات)
+  // stats
   const stats = useMemo(() => {
     const total = filtered.length;
     const count = (s) => filtered.filter((r) => normalize(r.status) === s).length;
@@ -147,7 +160,6 @@ export default function TemporaryBookingsPage() {
     }
   };
 
-  // ✅ Admin actions
   const handleConfirm = (r) => runUpdate(r.id, "confirmed", `Reservation #${r.id} confirmed.`);
   const handleReject = (r) => runUpdate(r.id, "rejected", `Reservation #${r.id} rejected.`);
   const handleComplete = (r) => runUpdate(r.id, "completed", `Reservation #${r.id} completed.`);

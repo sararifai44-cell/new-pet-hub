@@ -81,7 +81,7 @@ export default function BoardingServiceTable({
 
             const handleRowClick = () => {
               if (disabled) return;
-              safeOnEdit(s); // ✅ كبسة على السطر = Edit
+              safeOnEdit(s); 
             };
 
             const handleRowKeyDown = (e) => {
@@ -107,7 +107,6 @@ export default function BoardingServiceTable({
               >
                 <td className="px-4 py-3 font-medium">{s.id}</td>
 
-                {/* ✅ فقط EN */}
                 <td className="px-4 py-3">{s.name_en || "-"}</td>
 
                 <td className="px-4 py-3">${fmtMoney(s.price)}</td>
@@ -119,7 +118,6 @@ export default function BoardingServiceTable({
                 <td className="px-4 py-3">{fmtDate(s.created_at)}</td>
                 <td className="px-4 py-3">{fmtDate(s.updated_at)}</td>
 
-                {/* ✅ Actions جنب بعض بدون ما يفعّل row click */}
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div
                     className="flex items-center gap-2 flex-nowrap"

@@ -1,9 +1,11 @@
-import { apiSlice } from "../../App/apiSlice";
+// src/features/pet/petApiSlice.js
+import { apiSlice } from "../../app/apiSlice";
 
 export const petApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getPets: builder.query({
-      query: () => "admin/pets",
+      query: ({ page = 1, per_page = 15 } = {}) =>
+        `admin/pets?page=${page}&per_page=${per_page}`,
       providesTags: (result) => {
         const list = result?.data ?? [];
         return [

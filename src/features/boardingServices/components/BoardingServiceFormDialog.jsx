@@ -32,7 +32,6 @@ export default function BoardingServiceFormDialog({
     is_active: true,
   });
 
-  // ✅ لا نعرض الأخطاء إلا بعد ضغط Save
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -55,13 +54,11 @@ export default function BoardingServiceFormDialog({
   const errors = useMemo(() => {
     const next = {};
 
-    // ✅ create: الاسماء مطلوبة
     if (mode === "create") {
       if (!String(form.name_en).trim()) next.name_en = "Name EN is required";
       if (!String(form.name_ar).trim()) next.name_ar = "Name AR is required";
     }
 
-    // ✅ price مطلوب دائماً
     const rawPrice = String(form.price ?? "").trim();
     if (!rawPrice) next.price = "Price is required";
     else {
